@@ -173,8 +173,7 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
                   <SelectContent>
                     {projects.map(p => (
                       <SelectItem key={p.id} value={p.id}>
-                        <span>{p.name}</span>
-                        {p.address && <span className="text-gray-400 ml-2 text-xs">{p.address}</span>}
+                        {p.address ? `${p.name}（${p.address}）` : p.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
