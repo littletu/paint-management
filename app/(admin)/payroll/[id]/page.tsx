@@ -24,6 +24,14 @@ export default async function PayrollDetailPage({ params }: { params: Promise<{ 
 
   if (!record) notFound()
 
+  const { data: entries } = await supabase
+    .from('time_entries')
+    .select('*, project:projects(name)')
+    .eq('worker_id', record.worker_id)
+    .gte('work_date', record.period_start)
+    .lte('work_date', record.period_end)
+    .order('work_date', { ascending: true })
+
   const worker = record.worker as any
 
   return (
@@ -109,6 +117,49 @@ export default async function PayrollDetailPage({ params }: { params: Promise<{ 
               <span className="text-orange-600">{formatCurrency(record.net_amount)}</span>
             </div>
           </div>
+
+          {/* Daily breakdown */}
+          {entries && entries.length > 0 && (
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">每日工時明細</p>
+              <div className="rounded-lg border border-gray-100 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left px-3 py-2 font-medium text-gray-500">日期</th>
+                      <th className="text-left px-3 py-2 font-medium text-gray-500">工程</th>
+                      <th className="text-right px-3 py-2 font-medium text-gray-500">正常</th>
+                      <th className="text-right px-3 py-2 font-medium text-gray-500">加班</th>
+                      <th className="text-right px-3 py-2 font-medium text-gray-500">其他</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {entries.map((entry: any) => {
+                      const extras = (entry.transportation_fee || 0) + (entry.meal_fee || 0) +
+                        (entry.advance_payment || 0) + (entry.subsidy || 0) + (entry.other_fee || 0)
+                      return (
+                        <tr key={entry.id} className="hover:bg-gray-50">
+                          <td className="px-3 py-2 text-gray-700">{formatDate(entry.work_date)}</td>
+                          <td className="px-3 py-2 text-gray-600 max-w-[100px] truncate">{(entry.project as any)?.name ?? '—'}</td>
+                          <td className="px-3 py-2 text-right">{entry.regular_hours}h</td>
+                          <td className="px-3 py-2 text-right">{entry.overtime_hours > 0 ? `${entry.overtime_hours}h` : '—'}</td>
+                          <td className="px-3 py-2 text-right">{extras > 0 ? formatCurrency(extras) : '—'}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                  <tfoot className="bg-gray-50 font-medium">
+                    <tr>
+                      <td colSpan={2} className="px-3 py-2 text-gray-600">合計</td>
+                      <td className="px-3 py-2 text-right">{record.regular_hours}h</td>
+                      <td className="px-3 py-2 text-right">{record.overtime_hours > 0 ? `${record.overtime_hours}h` : '—'}</td>
+                      <td className="px-3 py-2 text-right"></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
 
           {record.notes && (
             <p className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3">{record.notes}</p>
