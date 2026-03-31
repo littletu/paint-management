@@ -41,7 +41,7 @@ export function AssignWorkerForm({ projectId, workers }: Props) {
         </SelectTrigger>
         <SelectContent>
           {workers.map(w => (
-            <SelectItem key={w.id} value={w.id}>{(w.profile as any)?.full_name}</SelectItem>
+            <SelectItem key={w.id} value={w.id} label={(w.profile as any)?.full_name ?? ''}>{(w.profile as any)?.full_name}</SelectItem>
           ))}
         </SelectContent>
       </Select>

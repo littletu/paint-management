@@ -67,7 +67,7 @@ export function ExpenseForm({ projects }: Props) {
             <Select value={form.project_id} onValueChange={v => setForm(p => ({ ...p, project_id: v ?? '' }))}>
               <SelectTrigger><SelectValue placeholder="選擇工程" /></SelectTrigger>
               <SelectContent>
-                {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                {projects.map(p => <SelectItem key={p.id} value={p.id} label={p.name}>{p.name}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

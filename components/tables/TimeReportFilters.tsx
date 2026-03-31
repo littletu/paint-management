@@ -55,7 +55,7 @@ export function TimeReportFilters({ workers, projects, currentFilters }: Props) 
             <SelectContent>
               <SelectItem value="all">全部師傅</SelectItem>
               {workers.map(w => (
-                <SelectItem key={w.id} value={w.id}>{w.profile?.full_name}</SelectItem>
+                <SelectItem key={w.id} value={w.id} label={w.profile?.full_name ?? ''}>{w.profile?.full_name}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -70,7 +70,7 @@ export function TimeReportFilters({ workers, projects, currentFilters }: Props) 
             <SelectContent>
               <SelectItem value="all">全部工程</SelectItem>
               {projects.map(p => (
-                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                <SelectItem key={p.id} value={p.id} label={p.name}>{p.name}</SelectItem>
               ))}
             </SelectContent>
           </Select>

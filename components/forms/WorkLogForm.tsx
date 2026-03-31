@@ -204,7 +204,7 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
                   </SelectTrigger>
                   <SelectContent>
                     {projects.map(p => (
-                      <SelectItem key={p.id} value={p.id}>
+                      <SelectItem key={p.id} value={p.id} label={p.name}>
                         {p.address ? `${p.name}（${p.address}）` : p.name}
                       </SelectItem>
                     ))}
