@@ -47,21 +47,24 @@ export async function proxy(request: NextRequest) {
   }
 
   // Protect worker routes from admins and vice versa
-  if (user && (pathname.startsWith('/worker') || pathname.startsWith('/dashboard') ||
+  const isWorkerRoute = pathname.startsWith('/worker/')
+  const isAdminRoute = pathname.startsWith('/dashboard') ||
     pathname.startsWith('/customers') || pathname.startsWith('/projects') ||
     pathname.startsWith('/workers') || pathname.startsWith('/time-reports') ||
     pathname.startsWith('/payroll') || pathname.startsWith('/accounting') ||
-    pathname.startsWith('/expenses'))) {
+    pathname.startsWith('/expenses')
+
+  if (user && (isWorkerRoute || isAdminRoute)) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)
       .single()
 
-    if (pathname.startsWith('/worker') && profile?.role !== 'worker') {
+    if (isWorkerRoute && profile?.role !== 'worker') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-    if (!pathname.startsWith('/worker') && profile?.role === 'worker') {
+    if (isAdminRoute && profile?.role === 'worker') {
       return NextResponse.redirect(new URL('/worker/work-log', request.url))
     }
   }
