@@ -21,15 +21,12 @@ export default async function WorkLogPage() {
     )
   }
 
-  // Get assigned active projects
-  const { data: assignments } = await supabase
-    .from('project_workers')
-    .select('project:projects(id, name, address, status)')
-    .eq('worker_id', worker.id)
-
-  const activeProjects = (assignments ?? [])
-    .map((a: any) => a.project)
-    .filter((p: any) => p && p.status === 'active')
+  // Get all active projects
+  const { data: activeProjects } = await supabase
+    .from('projects')
+    .select('id, name, address, status')
+    .eq('status', 'active')
+    .order('name')
 
   // Check if today's entry exists
   const today = todayString()
@@ -47,7 +44,7 @@ export default async function WorkLogPage() {
       </div>
       <WorkLogForm
         workerId={worker.id}
-        projects={activeProjects}
+        projects={activeProjects ?? []}
         todayEntries={todayEntries ?? []}
         today={today}
       />
