@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { UserPlus } from 'lucide-react'
@@ -35,16 +34,16 @@ export function AssignWorkerForm({ projectId, workers }: Props) {
 
   return (
     <div className="flex gap-2 mt-2">
-      <Select value={workerId} onValueChange={(v) => setWorkerId(v ?? '')}>
-        <SelectTrigger className="flex-1">
-          <SelectValue placeholder="選擇師傅加入工程" />
-        </SelectTrigger>
-        <SelectContent>
-          {workers.map(w => (
-            <SelectItem key={w.id} value={w.id} label={(w.profile as any)?.full_name ?? ''}>{(w.profile as any)?.full_name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <select
+        value={workerId}
+        onChange={e => setWorkerId(e.target.value)}
+        className="flex-1 h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+      >
+        <option value="">選擇師傅加入工程</option>
+        {workers.map(w => (
+          <option key={w.id} value={w.id}>{(w.profile as any)?.full_name}</option>
+        ))}
+      </select>
       <Button onClick={handleAssign} disabled={loading || !workerId} size="sm">
         <UserPlus className="w-3.5 h-3.5 mr-1.5" />
         指派

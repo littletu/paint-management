@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import type { Worker, Profile } from '@/types'
 
@@ -140,15 +139,14 @@ export function WorkerForm({ worker }: Props) {
             {isEdit && (
               <div className="space-y-1.5">
                 <Label>在職狀態</Label>
-                <Select value={form.is_active ? 'true' : 'false'} onValueChange={v => setForm(p => ({ ...p, is_active: v === 'true' }))}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">在職</SelectItem>
-                    <SelectItem value="false">離職</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={form.is_active ? 'true' : 'false'}
+                  onChange={e => setForm(p => ({ ...p, is_active: e.target.value === 'true' }))}
+                  className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  <option value="true">在職</option>
+                  <option value="false">離職</option>
+                </select>
               </div>
             )}
           </div>

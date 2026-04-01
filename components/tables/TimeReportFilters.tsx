@@ -1,10 +1,9 @@
 'use client'
 
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useState } from 'react'
 import { Search, X } from 'lucide-react'
 
@@ -18,6 +17,8 @@ interface Props {
     date_to?: string
   }
 }
+
+const selectCls = 'w-full h-9 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
 export function TimeReportFilters({ workers, projects, currentFilters }: Props) {
   const router = useRouter()
@@ -48,32 +49,30 @@ export function TimeReportFilters({ workers, projects, currentFilters }: Props) 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="space-y-1">
           <Label className="text-xs">師傅</Label>
-          <Select value={filters.worker_id} onValueChange={v => setFilters(p => ({ ...p, worker_id: v ?? 'all' }))}>
-            <SelectTrigger className="h-9 text-sm">
-              <SelectValue placeholder="全部師傅" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部師傅</SelectItem>
-              {workers.map(w => (
-                <SelectItem key={w.id} value={w.id} label={w.profile?.full_name ?? ''}>{w.profile?.full_name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            value={filters.worker_id}
+            onChange={e => setFilters(p => ({ ...p, worker_id: e.target.value }))}
+            className={selectCls}
+          >
+            <option value="all">全部師傅</option>
+            {workers.map(w => (
+              <option key={w.id} value={w.id}>{w.profile?.full_name}</option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-1">
           <Label className="text-xs">工程</Label>
-          <Select value={filters.project_id} onValueChange={v => setFilters(p => ({ ...p, project_id: v ?? 'all' }))}>
-            <SelectTrigger className="h-9 text-sm">
-              <SelectValue placeholder="全部工程" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">全部工程</SelectItem>
-              {projects.map(p => (
-                <SelectItem key={p.id} value={p.id} label={p.name}>{p.name}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <select
+            value={filters.project_id}
+            onChange={e => setFilters(p => ({ ...p, project_id: e.target.value }))}
+            className={selectCls}
+          >
+            <option value="all">全部工程</option>
+            {projects.map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
+            ))}
+          </select>
         </div>
 
         <div className="space-y-1">

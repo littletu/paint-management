@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import type { Project, Customer } from '@/types'
@@ -17,6 +16,8 @@ interface Props {
   project?: Project
   customers: Customer[]
 }
+
+const selectCls = 'w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
 export function ProjectForm({ project, customers }: Props) {
   const router = useRouter()
@@ -35,7 +36,7 @@ export function ProjectForm({ project, customers }: Props) {
   })
   const [loading, setLoading] = useState(false)
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
@@ -84,16 +85,12 @@ export function ProjectForm({ project, customers }: Props) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="customer_id">客戶 *</Label>
-              <Select value={form.customer_id} onValueChange={v => setForm(p => ({ ...p, customer_id: v ?? '' }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="選擇客戶" />
-                </SelectTrigger>
-                <SelectContent>
-                  {customers.map(c => (
-                    <SelectItem key={c.id} value={c.id} label={c.name}>{c.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <select name="customer_id" value={form.customer_id} onChange={handleChange} className={selectCls}>
+                <option value="">選擇客戶</option>
+                {customers.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
@@ -103,17 +100,12 @@ export function ProjectForm({ project, customers }: Props) {
 
             <div className="space-y-1.5">
               <Label htmlFor="status">狀態</Label>
-              <Select value={form.status} onValueChange={v => setForm(p => ({ ...p, status: v as any }))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="pending">待開工</SelectItem>
-                  <SelectItem value="active">進行中</SelectItem>
-                  <SelectItem value="completed">已完工</SelectItem>
-                  <SelectItem value="cancelled">已取消</SelectItem>
-                </SelectContent>
-              </Select>
+              <select name="status" value={form.status} onChange={handleChange} className={selectCls}>
+                <option value="pending">待開工</option>
+                <option value="active">進行中</option>
+                <option value="completed">已完工</option>
+                <option value="cancelled">已取消</option>
+              </select>
             </div>
 
             <div className="space-y-1.5">

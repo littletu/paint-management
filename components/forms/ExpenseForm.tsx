@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -16,6 +15,8 @@ import { Plus } from 'lucide-react'
 interface Props {
   projects: Array<{ id: string; name: string }>
 }
+
+const selectCls = 'w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
 export function ExpenseForm({ projects }: Props) {
   const router = useRouter()
@@ -29,7 +30,7 @@ export function ExpenseForm({ projects }: Props) {
   })
   const [loading, setLoading] = useState(false)
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
@@ -64,12 +65,10 @@ export function ExpenseForm({ projects }: Props) {
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-1.5">
             <Label>工程</Label>
-            <Select value={form.project_id} onValueChange={v => setForm(p => ({ ...p, project_id: v ?? '' }))}>
-              <SelectTrigger><SelectValue placeholder="選擇工程" /></SelectTrigger>
-              <SelectContent>
-                {projects.map(p => <SelectItem key={p.id} value={p.id} label={p.name}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <select name="project_id" value={form.project_id} onChange={handleChange} className={selectCls}>
+              <option value="">選擇工程</option>
+              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
@@ -78,15 +77,12 @@ export function ExpenseForm({ projects }: Props) {
             </div>
             <div className="space-y-1.5">
               <Label>類別</Label>
-              <Select value={form.category} onValueChange={v => setForm(p => ({ ...p, category: v as any }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="material">材料</SelectItem>
-                  <SelectItem value="tool">工具</SelectItem>
-                  <SelectItem value="transportation">交通</SelectItem>
-                  <SelectItem value="other">其他</SelectItem>
-                </SelectContent>
-              </Select>
+              <select name="category" value={form.category} onChange={handleChange} className={selectCls}>
+                <option value="material">材料</option>
+                <option value="tool">工具</option>
+                <option value="transportation">交通</option>
+                <option value="other">其他</option>
+              </select>
             </div>
           </div>
           <div className="space-y-1.5">
