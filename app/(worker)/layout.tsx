@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ClipboardList, History, Wallet } from 'lucide-react'
 import { WorkerHeader } from '@/components/layout/WorkerHeader'
+import { WorkerNav } from '@/components/layout/WorkerNav'
 
 export default async function WorkerLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -27,23 +27,7 @@ export default async function WorkerLayout({ children }: { children: React.React
         {children}
       </main>
 
-      {/* Bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-10">
-        {[
-          { href: '/worker/work-log', label: '填工時', icon: ClipboardList },
-          { href: '/worker/history', label: '歷史紀錄', icon: History },
-          { href: '/worker/payroll', label: '薪資', icon: Wallet },
-        ].map(({ href, label, icon: Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex-1 flex flex-col items-center py-3 gap-1 text-xs text-gray-500 hover:text-orange-500 transition-colors"
-          >
-            <Icon className="w-5 h-5" />
-            {label}
-          </Link>
-        ))}
-      </nav>
+      <WorkerNav />
     </div>
   )
 }
