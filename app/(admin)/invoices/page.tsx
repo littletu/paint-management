@@ -40,21 +40,19 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
     .order('created_at', { ascending: false })
     .limit(500)
 
-  if (invoicesError || !user || profile?.role !== 'admin') {
-    return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 space-y-1">
-        <p className="font-semibold mb-1">診斷資訊</p>
-        <p>登入狀態：{user ? `✅ ${user.email}` : '❌ 未登入'}</p>
-        <p>角色：{profile?.role ?? '❌ 查無 profile'}</p>
-        {invoicesError && <p className="font-mono">查詢錯誤：{invoicesError.message}</p>}
-        {!invoicesError && user && profile?.role !== 'admin' && (
-          <p>⚠️ 目前角色 <strong>{profile?.role}</strong> 沒有 admin 權限，RLS 會擋住所有請款單查詢</p>
-        )}
-      </div>
-    )
-  }
-
   const invoices = allInvoices ?? []
+
+  // Always-visible debug panel
+  const debugPanel = (
+    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 space-y-0.5">
+      <p className="font-semibold">🔍 診斷面板（確認後會移除）</p>
+      <p>Supabase URL：{process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0, 40)}</p>
+      <p>用戶：{user?.email ?? '❌ 未登入'}</p>
+      <p>角色：{profile?.role ?? '查無'}</p>
+      <p>查詢錯誤：{invoicesError ? invoicesError.message : '無'}</p>
+      <p>查詢回傳筆數：{invoices.length}</p>
+    </div>
+  )
 
   const filtered = status ? invoices.filter(inv => inv.status === status) : invoices
 
@@ -73,6 +71,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
 
   return (
     <div>
+      {debugPanel}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">請款管理</h1>
