@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { Plus, ClipboardList } from 'lucide-react'
@@ -28,12 +27,6 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const { status } = await searchParams
   const supabase = await createClient()
 
-  // Diagnostic: verify auth
-  const { data: { user } } = await supabase.auth.getUser()
-  const { data: profile } = user
-    ? await supabase.from('profiles').select('role').eq('id', user.id).single()
-    : { data: null }
-
   const { data: allInvoices, error: invoicesError } = await supabase
     .from('invoices')
     .select('*, customer:customers(name), project:projects(name)')
@@ -41,18 +34,6 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
     .limit(500)
 
   const invoices = allInvoices ?? []
-
-  // Always-visible debug panel
-  const debugPanel = (
-    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800 space-y-0.5">
-      <p className="font-semibold">🔍 診斷面板（確認後會移除）</p>
-      <p>Supabase URL：{process.env.NEXT_PUBLIC_SUPABASE_URL?.slice(0, 40)}</p>
-      <p>用戶：{user?.email ?? '❌ 未登入'}</p>
-      <p>角色：{profile?.role ?? '查無'}</p>
-      <p>查詢錯誤：{invoicesError ? invoicesError.message : '無'}</p>
-      <p>查詢回傳筆數：{invoices.length}</p>
-    </div>
-  )
 
   const filtered = status ? invoices.filter(inv => inv.status === status) : invoices
 
@@ -71,7 +52,6 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
 
   return (
     <div>
-      {debugPanel}
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">請款管理</h1>

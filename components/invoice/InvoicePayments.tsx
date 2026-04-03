@@ -64,6 +64,8 @@ export function InvoicePayments({ invoiceId, invoiceTotal, taxInvoices: init }: 
     const data = await res.json()
     if (!res.ok) { toast.error(data.error ?? '新增失敗'); setLoading(false); return }
     toast.success('統一發票已新增')
+    // Update local state immediately so UI updates without needing router.refresh()
+    setTaxInvoices(prev => [...prev, { ...data, invoice_payments: [] }])
     setTaxForm(emptyTaxForm())
     setShowTaxForm(false)
     setLoading(false)
@@ -76,6 +78,7 @@ export function InvoicePayments({ invoiceId, invoiceTotal, taxInvoices: init }: 
     const data = await res.json()
     if (!res.ok) { toast.error(data.error ?? '刪除失敗'); return }
     toast.success('已刪除')
+    setTaxInvoices(prev => prev.filter(ti => ti.id !== taxId))
     router.refresh()
   }
 
@@ -91,6 +94,12 @@ export function InvoicePayments({ invoiceId, invoiceTotal, taxInvoices: init }: 
     const data = await res.json()
     if (!res.ok) { toast.error(data.error ?? '新增失敗'); setLoading(false); return }
     toast.success('收款記錄已新增')
+    // Update local state immediately
+    setTaxInvoices(prev => prev.map(ti =>
+      ti.id === taxId
+        ? { ...ti, invoice_payments: [...ti.invoice_payments, data] }
+        : ti
+    ))
     setPayForms(prev => ({ ...prev, [taxId]: emptyPayForm() }))
     setShowPayForm(prev => ({ ...prev, [taxId]: false }))
     setLoading(false)
@@ -103,6 +112,11 @@ export function InvoicePayments({ invoiceId, invoiceTotal, taxInvoices: init }: 
     const data = await res.json()
     if (!res.ok) { toast.error(data.error ?? '刪除失敗'); return }
     toast.success('已刪除')
+    setTaxInvoices(prev => prev.map(ti =>
+      ti.id === taxId
+        ? { ...ti, invoice_payments: ti.invoice_payments.filter(p => p.id !== paymentId) }
+        : ti
+    ))
     router.refresh()
   }
 
