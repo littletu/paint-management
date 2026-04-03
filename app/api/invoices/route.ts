@@ -20,10 +20,11 @@ export async function POST(request: Request) {
 
   // Generate invoice number (application-side, no RPC needed)
   const year = new Date().getFullYear()
-  const { count } = await supabase
+  const { count, error: countError } = await supabase
     .from('invoices')
     .select('*', { count: 'exact', head: true })
     .like('invoice_number', `INV-${year}-%`)
+  if (countError) return NextResponse.json({ error: `資料庫錯誤（invoices 資料表可能尚未建立）：${countError.message}` }, { status: 500 })
   const seq = ((count ?? 0) + 1).toString().padStart(4, '0')
   const invoice_number = `INV-${year}-${seq}`
 

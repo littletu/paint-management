@@ -1,5 +1,8 @@
--- Invoice status enum
-CREATE TYPE IF NOT EXISTS invoice_status AS ENUM ('draft', 'sent', 'paid', 'cancelled');
+-- Invoice status enum (safe to re-run)
+DO $$ BEGIN
+  CREATE TYPE invoice_status AS ENUM ('draft', 'sent', 'paid', 'cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- Invoices table
 CREATE TABLE IF NOT EXISTS invoices (
