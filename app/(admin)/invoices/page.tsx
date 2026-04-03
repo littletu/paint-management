@@ -30,7 +30,7 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
 
   const { data: allInvoices } = await supabase
     .from('invoices')
-    .select('*, customer:customers(name), project:projects(name)')
+    .select('*, customer:customers(name), project:projects(name), invoice_payments(amount)')
     .order('created_at', { ascending: false })
     .limit(500)
 
@@ -127,6 +127,13 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
                   </div>
                   <div className="text-right shrink-0 ml-4">
                     <p className="font-semibold text-gray-900">{formatCurrency(inv.total)}</p>
+                    {Array.isArray(inv.invoice_payments) && inv.invoice_payments.length > 0 && (() => {
+                      const paid = inv.invoice_payments.reduce((s: number, p: any) => s + (p.amount || 0), 0)
+                      const remaining = inv.total - paid
+                      return remaining > 0
+                        ? <p className="text-xs text-orange-600 mt-0.5">已收 {formatCurrency(paid)}</p>
+                        : <p className="text-xs text-green-600 mt-0.5">已全額收款</p>
+                    })()}
                   </div>
                 </Link>
               ))}

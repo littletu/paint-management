@@ -6,6 +6,7 @@ import { ArrowLeft } from 'lucide-react'
 import { formatDate, formatCurrency } from '@/lib/utils/date'
 import { InvoicePrintButton } from '@/components/invoice/InvoicePrintButton'
 import { InvoiceStatusActions } from '@/components/invoice/InvoiceStatusActions'
+import { InvoicePayments } from '@/components/invoice/InvoicePayments'
 
 const statusLabel: Record<string, string> = {
   draft: '草稿',
@@ -25,7 +26,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: invoice }, { data: items }] = await Promise.all([
+  const [{ data: invoice }, { data: items }, { data: payments }] = await Promise.all([
     supabase
       .from('invoices')
       .select('*, customer:customers(name, contact_person, phone), project:projects(name)')
@@ -36,6 +37,11 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       .select('*')
       .eq('invoice_id', id)
       .order('sort_order'),
+    supabase
+      .from('invoice_payments')
+      .select('*')
+      .eq('invoice_id', id)
+      .order('payment_date'),
   ])
 
   if (!invoice) notFound()
@@ -174,6 +180,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
             </CardContent>
           </Card>
         )}
+
+        {/* Payments */}
+        <div className="print:hidden">
+          <InvoicePayments
+            invoiceId={id}
+            invoiceTotal={invoice.total}
+            payments={payments ?? []}
+          />
+        </div>
       </div>
     </div>
   )
