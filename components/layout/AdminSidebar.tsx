@@ -12,6 +12,7 @@ import {
   Wallet,
   BookOpen,
   Receipt,
+  ClipboardList,
   LogOut,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -25,6 +26,7 @@ const navItems = [
   { href: '/time-reports', label: '工時報表', icon: Clock },
   { href: '/payroll', label: '薪資管理', icon: Wallet },
   { href: '/expenses', label: '開銷管理', icon: Receipt },
+  { href: '/invoices', label: '請款管理', icon: ClipboardList },
   { href: '/accounting', label: '帳目總覽', icon: BookOpen },
 ]
 
