@@ -3,25 +3,49 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDate, formatCurrency } from '@/lib/utils/date'
 import { ExpenseForm } from '@/components/forms/ExpenseForm'
+import { ExpenseFilters } from '@/components/forms/ExpenseFilters'
 import { Receipt, FileText, ExternalLink } from 'lucide-react'
 
 const categoryLabel: Record<string, string> = {
   material: '材料', tool: '工具', transportation: '交通', other: '其他',
 }
 
-export default async function ExpensesPage() {
+interface SearchParams {
+  project?: string
+  category?: string
+  from?: string
+  to?: string
+}
+
+export default async function ExpensesPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const { project, category, from: dateFrom, to: dateTo } = await searchParams
   const supabase = await createClient()
 
+  // Build expenses query
+  let expenseQuery = supabase
+    .from('expenses')
+    .select('*, project:projects(name)')
+    .order('date', { ascending: false })
+    .limit(200)
+  if (project) expenseQuery = expenseQuery.eq('project_id', project)
+  if (category) expenseQuery = expenseQuery.eq('category', category)
+  if (dateFrom) expenseQuery = expenseQuery.gte('date', dateFrom)
+  if (dateTo) expenseQuery = expenseQuery.lte('date', dateTo)
+
+  // Build receipts query
+  let receiptQuery = supabase
+    .from('worker_receipts')
+    .select('*, worker:workers(profile:profiles(full_name)), project:projects(name)')
+    .order('receipt_date', { ascending: false })
+    .limit(200)
+  if (project) receiptQuery = receiptQuery.eq('project_id', project)
+  if (dateFrom) receiptQuery = receiptQuery.gte('receipt_date', dateFrom)
+  if (dateTo) receiptQuery = receiptQuery.lte('receipt_date', dateTo)
+
   const [{ data: expenses }, { data: projects }, { data: receipts }] = await Promise.all([
-    supabase.from('expenses')
-      .select('*, project:projects(name)')
-      .order('date', { ascending: false })
-      .limit(100),
-    supabase.from('projects').select('id, name').eq('status', 'active').order('name'),
-    supabase.from('worker_receipts')
-      .select('*, worker:workers(profile:profiles(full_name)), project:projects(name)')
-      .order('receipt_date', { ascending: false })
-      .limit(100),
+    expenseQuery,
+    supabase.from('projects').select('id, name').order('name'),
+    receiptQuery,
   ])
 
   const expenseTotal = expenses?.reduce((s, e) => s + (e.amount || 0), 0) ?? 0
@@ -29,18 +53,25 @@ export default async function ExpensesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">開銷管理</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            公司開銷 {formatCurrency(expenseTotal)}　師傅發票 {formatCurrency(receiptTotal)}
-          </p>
-        </div>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">開銷管理</h1>
+        <p className="text-sm text-gray-500 mt-1">
+          公司開銷 {formatCurrency(expenseTotal)}　師傅發票 {formatCurrency(receiptTotal)}　合計 {formatCurrency(expenseTotal + receiptTotal)}
+        </p>
+      </div>
+
+      {/* 篩選列 */}
+      <div className="mb-6 p-4 bg-white rounded-xl border border-gray-200">
+        <ExpenseFilters
+          projects={projects ?? []}
+          expenseCount={expenses?.length ?? 0}
+          receiptCount={receipts?.length ?? 0}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <ExpenseForm projects={projects ?? []} />
+          <ExpenseForm projects={(projects ?? []).filter((p: any) => true)} />
         </div>
 
         <div className="lg:col-span-2 space-y-6">
@@ -56,19 +87,32 @@ export default async function ExpensesPage() {
             <CardContent className="p-0">
               <div className="divide-y divide-gray-50">
                 {!expenses?.length ? (
-                  <p className="text-center text-gray-400 py-10 text-sm">尚無開銷記錄</p>
+                  <p className="text-center text-gray-400 py-10 text-sm">尚無符合條件的開銷記錄</p>
                 ) : expenses.map((expense: any) => (
                   <div key={expense.id} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50">
-                    <div>
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">{categoryLabel[expense.category]}</Badge>
-                        <span className="text-sm font-medium text-gray-900">{expense.description || '—'}</span>
+                        <Badge variant="outline" className="text-xs shrink-0">{categoryLabel[expense.category]}</Badge>
+                        <span className="text-sm font-medium text-gray-900 truncate">{expense.description || '—'}</span>
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {formatDate(expense.date)} ｜ {(expense.project as any)?.name ?? '—'}
-                      </p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <p className="text-xs text-gray-500">
+                          {formatDate(expense.date)} ｜ {(expense.project as any)?.name ?? '—'}
+                        </p>
+                        {expense.receipt_url && (
+                          <a
+                            href={expense.receipt_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            {expense.receipt_name ?? '查看發票'}
+                          </a>
+                        )}
+                      </div>
                     </div>
-                    <span className="font-semibold text-sm text-red-600">{formatCurrency(expense.amount)}</span>
+                    <span className="font-semibold text-sm text-red-600 shrink-0 ml-3">{formatCurrency(expense.amount)}</span>
                   </div>
                 ))}
               </div>
@@ -87,7 +131,7 @@ export default async function ExpensesPage() {
             <CardContent className="p-0">
               <div className="divide-y divide-gray-50">
                 {!receipts?.length ? (
-                  <p className="text-center text-gray-400 py-10 text-sm">尚無師傅發票記錄</p>
+                  <p className="text-center text-gray-400 py-10 text-sm">尚無符合條件的師傅發票記錄</p>
                 ) : receipts.map((r: any) => (
                   <div key={r.id} className="px-4 py-3 flex items-center justify-between hover:bg-gray-50">
                     <div className="flex-1 min-w-0">

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { todayString } from '@/lib/utils/date'
-import { Plus } from 'lucide-react'
+import { Plus, Upload, X, FileText } from 'lucide-react'
 
 interface Props {
   projects: Array<{ id: string; name: string }>
@@ -21,6 +21,8 @@ const selectCls = 'w-full h-8 rounded-lg border border-input bg-transparent px-2
 export function ExpenseForm({ projects }: Props) {
   const router = useRouter()
   const supabase = createClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const [form, setForm] = useState({
     project_id: '',
     date: todayString(),
@@ -28,10 +30,18 @@ export function ExpenseForm({ projects }: Props) {
     amount: '',
     description: '',
   })
+  const [file, setFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    if (f.size > 10 * 1024 * 1024) { toast.error('檔案大小不能超過 10MB'); return }
+    setFile(f)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -41,14 +51,42 @@ export function ExpenseForm({ projects }: Props) {
 
     setLoading(true)
     const { data: { user } } = await supabase.auth.getUser()
+
+    let receipt_url: string | null = null
+    let receipt_name: string | null = null
+
+    if (file) {
+      const ext = file.name.split('.').pop()
+      const path = `expenses/${user!.id}/${Date.now()}.${ext}`
+      const { error: uploadError } = await supabase.storage
+        .from('receipts')
+        .upload(path, file, { upsert: false })
+      if (uploadError) {
+        toast.error('發票上傳失敗：' + uploadError.message)
+        setLoading(false)
+        return
+      }
+      const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(path)
+      receipt_url = urlData.publicUrl
+      receipt_name = file.name
+    }
+
     const { error } = await supabase.from('expenses').insert({
-      ...form,
+      project_id: form.project_id,
+      date: form.date,
+      category: form.category,
       amount: parseFloat(form.amount),
+      description: form.description || null,
+      receipt_url,
+      receipt_name,
       created_by: user!.id,
     })
+
     if (error) { toast.error('新增失敗：' + error.message); setLoading(false); return }
     toast.success('開銷已記錄')
     setForm({ project_id: '', date: todayString(), category: 'material', amount: '', description: '' })
+    setFile(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
     router.refresh()
     setLoading(false)
   }
@@ -93,6 +131,41 @@ export function ExpenseForm({ projects }: Props) {
             <Label>說明</Label>
             <Textarea name="description" value={form.description} onChange={handleChange} placeholder="開銷說明" rows={2} />
           </div>
+
+          {/* 發票上傳 */}
+          <div className="space-y-1.5">
+            <Label>發票 / 收據</Label>
+            {file ? (
+              <div className="flex items-center gap-2 p-2.5 bg-orange-50 border border-orange-200 rounded-lg">
+                <FileText className="w-4 h-4 text-orange-500 shrink-0" />
+                <span className="text-sm text-orange-700 flex-1 truncate">{file.name}</span>
+                <button
+                  type="button"
+                  onClick={() => { setFile(null); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                  className="text-orange-400 hover:text-orange-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full flex items-center justify-center gap-2 p-2.5 border border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-orange-400 hover:text-orange-500 transition-colors"
+              >
+                <Upload className="w-4 h-4" />
+                點擊上傳（照片、PDF）
+              </button>
+            )}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,application/pdf"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+          </div>
+
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? '新增中...' : '新增開銷'}
           </Button>
