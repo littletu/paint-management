@@ -28,11 +28,21 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const { status } = await searchParams
   const supabase = await createClient()
 
-  const { data: allInvoices } = await supabase
+  const { data: allInvoices, error: invoicesError } = await supabase
     .from('invoices')
     .select('*, customer:customers(name), project:projects(name)')
     .order('created_at', { ascending: false })
     .limit(500)
+
+  if (invoicesError) {
+    return (
+      <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+        <p className="font-semibold mb-1">資料庫查詢錯誤</p>
+        <p className="font-mono">{invoicesError.message}</p>
+        <p className="mt-2 text-xs text-red-500">請確認 Migration 007 已在 Supabase 執行完成</p>
+      </div>
+    )
+  }
 
   const invoices = allInvoices ?? []
 
