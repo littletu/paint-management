@@ -7,7 +7,7 @@ export default async function WorkerProfilePage() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, phone, id_number, birthday, gender, blood_type, address, mobile, emergency_contact, emergency_phone')
+    .select('full_name, phone, id_number, birthday, gender, blood_type, address, mobile, emergency_contact, emergency_phone, avatar_url')
     .eq('id', user!.id)
     .single()
 
@@ -29,6 +29,7 @@ export default async function WorkerProfilePage() {
         mobile={profile?.mobile ?? ''}
         emergencyContact={profile?.emergency_contact ?? ''}
         emergencyPhone={profile?.emergency_phone ?? ''}
+        avatarUrl={profile?.avatar_url ?? ''}
       />
     </div>
   )

@@ -5,12 +5,13 @@ import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 import { Plus, UserCog, Phone } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/date'
+import Image from 'next/image'
 
 export default async function WorkersPage() {
   const supabase = await createClient()
   const { data: workers } = await supabase
     .from('workers')
-    .select('*, profile:profiles(full_name, phone)')
+    .select('*, profile:profiles(full_name, phone, avatar_url)')
     .order('created_at', { ascending: false })
 
   return (
@@ -42,7 +43,18 @@ export default async function WorkersPage() {
               <Card className="hover:shadow-md transition-shadow cursor-pointer h-full">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">{worker.profile?.full_name}</h3>
+                    <div className="flex items-center gap-3">
+                      {worker.profile?.avatar_url ? (
+                        <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100 shrink-0">
+                          <Image src={worker.profile.avatar_url} alt={worker.profile.full_name} fill className="object-cover" unoptimized />
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-lg shrink-0">
+                          {worker.profile?.full_name?.[0] ?? '?'}
+                        </div>
+                      )}
+                      <h3 className="font-semibold text-gray-900">{worker.profile?.full_name}</h3>
+                    </div>
                     <Badge variant={worker.is_active ? 'default' : 'secondary'}>
                       {worker.is_active ? '在職' : '離職'}
                     </Badge>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 import { ArrowLeft, Clock, User } from 'lucide-react'
 import { formatDate, formatCurrency } from '@/lib/utils/date'
+import Image from 'next/image'
 
 const genderLabel: Record<string, string> = { male: '男', female: '女' }
 
@@ -48,6 +49,15 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
           <Link href="/workers" className="text-gray-500 hover:text-gray-800">
             <ArrowLeft className="w-5 h-5" />
           </Link>
+          {profile?.avatar_url ? (
+            <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-100 shrink-0">
+              <Image src={profile.avatar_url} alt={profile.full_name} fill className="object-cover" unoptimized />
+            </div>
+          ) : (
+            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-lg shrink-0">
+              {profile?.full_name?.[0] ?? '?'}
+            </div>
+          )}
           <h1 className="text-2xl font-bold text-gray-900">{profile?.full_name}</h1>
         </div>
         <WorkerDeleteButton workerId={id} workerName={profile?.full_name ?? ''} />

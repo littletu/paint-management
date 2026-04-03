@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { Camera } from 'lucide-react'
+import Image from 'next/image'
 
 interface Props {
   fullName: string
@@ -21,16 +23,18 @@ interface Props {
   mobile: string
   emergencyContact: string
   emergencyPhone: string
+  avatarUrl: string
 }
 
 const selectCls = 'w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
 export function WorkerProfileForm({
   fullName, phone, email, idNumber, birthday, gender,
-  bloodType, address, mobile, emergencyContact, emergencyPhone,
+  bloodType, address, mobile, emergencyContact, emergencyPhone, avatarUrl,
 }: Props) {
   const supabase = createClient()
   const router = useRouter()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [profile, setProfile] = useState({
     full_name: fullName,
@@ -44,9 +48,47 @@ export function WorkerProfileForm({
     emergency_contact: emergencyContact,
     emergency_phone: emergencyPhone,
   })
+  const [currentAvatarUrl, setCurrentAvatarUrl] = useState(avatarUrl)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [password, setPassword] = useState({ new_password: '', confirm_password: '' })
   const [loadingProfile, setLoadingProfile] = useState(false)
   const [loadingPassword, setLoadingPassword] = useState(false)
+
+  async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (file.size > 5 * 1024 * 1024) { toast.error('圖片大小不能超過 5MB'); return }
+
+    setUploadingAvatar(true)
+    const { data: { user } } = await supabase.auth.getUser()
+    const ext = file.name.split('.').pop()
+    const path = `${user!.id}/avatar.${ext}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(path, file, { upsert: true })
+
+    if (uploadError) {
+      toast.error('上傳失敗：' + uploadError.message)
+      setUploadingAvatar(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
+    const urlWithBust = `${publicUrl}?t=${Date.now()}`
+
+    const { error: updateError } = await supabase.from('profiles')
+      .update({ avatar_url: publicUrl })
+      .eq('id', user!.id)
+
+    if (updateError) { toast.error('儲存失敗：' + updateError.message) }
+    else {
+      setCurrentAvatarUrl(urlWithBust)
+      toast.success('頭像已更新')
+      router.refresh()
+    }
+    setUploadingAvatar(false)
+  }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setProfile(p => ({ ...p, [e.target.name]: e.target.value }))
@@ -98,6 +140,38 @@ export function WorkerProfileForm({
           <CardTitle className="text-base">基本資料</CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Avatar */}
+          <div className="flex flex-col items-center mb-5">
+            <div
+              className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-100 cursor-pointer group"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {currentAvatarUrl ? (
+                <Image src={currentAvatarUrl} alt="頭像" fill className="object-cover" unoptimized />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-400 text-3xl font-bold">
+                  {fullName?.[0] ?? '?'}
+                </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+              {uploadingAvatar && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-2">點擊更換頭像</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
+
           <form onSubmit={handleProfileSubmit} className="space-y-3">
             <div className="space-y-1.5">
               <Label>電子郵件（登入帳號）</Label>
