@@ -26,7 +26,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
   const { id } = await params
   const supabase = await createClient()
 
-  const [{ data: invoice }, { data: items }, { data: payments }] = await Promise.all([
+  const [{ data: invoice }, { data: items }, { data: taxInvoices }] = await Promise.all([
     supabase
       .from('invoices')
       .select('*, customer:customers(name, contact_person, phone), project:projects(name)')
@@ -38,10 +38,10 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
       .eq('invoice_id', id)
       .order('sort_order'),
     supabase
-      .from('invoice_payments')
-      .select('*')
+      .from('invoice_tax_invoices')
+      .select('*, invoice_payments(*)')
       .eq('invoice_id', id)
-      .order('payment_date'),
+      .order('tax_invoice_date'),
   ])
 
   if (!invoice) notFound()
@@ -186,7 +186,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           <InvoicePayments
             invoiceId={id}
             invoiceTotal={invoice.total}
-            payments={payments ?? []}
+            taxInvoices={(taxInvoices ?? []) as any}
           />
         </div>
       </div>
