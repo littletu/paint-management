@@ -28,18 +28,28 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Pro
   const { status } = await searchParams
   const supabase = await createClient()
 
+  // Diagnostic: verify auth
+  const { data: { user } } = await supabase.auth.getUser()
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('role').eq('id', user.id).single()
+    : { data: null }
+
   const { data: allInvoices, error: invoicesError } = await supabase
     .from('invoices')
     .select('*, customer:customers(name), project:projects(name)')
     .order('created_at', { ascending: false })
     .limit(500)
 
-  if (invoicesError) {
+  if (invoicesError || !user || profile?.role !== 'admin') {
     return (
-      <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
-        <p className="font-semibold mb-1">資料庫查詢錯誤</p>
-        <p className="font-mono">{invoicesError.message}</p>
-        <p className="mt-2 text-xs text-red-500">請確認 Migration 007 已在 Supabase 執行完成</p>
+      <div className="p-6 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 space-y-1">
+        <p className="font-semibold mb-1">診斷資訊</p>
+        <p>登入狀態：{user ? `✅ ${user.email}` : '❌ 未登入'}</p>
+        <p>角色：{profile?.role ?? '❌ 查無 profile'}</p>
+        {invoicesError && <p className="font-mono">查詢錯誤：{invoicesError.message}</p>}
+        {!invoicesError && user && profile?.role !== 'admin' && (
+          <p>⚠️ 目前角色 <strong>{profile?.role}</strong> 沒有 admin 權限，RLS 會擋住所有請款單查詢</p>
+        )}
       </div>
     )
   }
