@@ -9,6 +9,7 @@ import { ArrowLeft, Users, FileText, ExternalLink, Receipt, Calendar } from 'luc
 import { AssignWorkerForm } from '@/components/forms/AssignWorkerForm'
 import { formatCurrency, formatDate } from '@/lib/utils/date'
 import { ProjectTabs } from '@/components/project/ProjectTabs'
+import { ProjectTimeEntriesTab } from '@/components/project/ProjectTimeEntriesTab'
 
 const statusLabel: Record<string, string> = {
   pending: '待開工',
@@ -67,10 +68,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const tabs = [
     { key: 'info', label: '工程資訊' },
     { key: 'workers', label: '師傅', count: assignments?.length ?? 0 },
+    { key: 'time', label: '工時' },
     { key: 'invoices', label: '請款單', count: invoiceList.length },
     { key: 'expenses', label: '開銷', count: (expenses ?? []).length },
     { key: 'receipts', label: '師傅發票', count: receipts?.length ?? 0 },
   ]
+
+  const assignedWorkers = (assignments ?? []).map((a: any) => ({
+    id: a.worker_id,
+    name: a.worker?.profile?.full_name ?? '',
+  }))
 
   return (
     <div className="max-w-4xl">
@@ -177,7 +184,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </Card>
         </div>
 
-        {/* Tab 2: 請款單 */}
+        {/* Tab 2: 工時 */}
+        <div>
+          <ProjectTimeEntriesTab projectId={id} assignedWorkers={assignedWorkers} />
+        </div>
+
+        {/* Tab 3: 請款單 */}
         <div>
           <Card>
             <CardHeader className="pb-3">
