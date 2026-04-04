@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
-import { ProjectForm } from '@/components/forms/ProjectForm'
+import { ProjectInfoPanel } from '@/components/project/ProjectInfoPanel'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
@@ -144,8 +144,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       {/* Tabs */}
       <ProjectTabs tabs={tabs}>
         {/* Tab 0: 工程資訊 */}
-        <div className="space-y-4">
-          <ProjectForm project={project} customers={customers ?? []} />
+        <div>
+          <ProjectInfoPanel project={project} customers={customers ?? []} />
         </div>
 
         {/* Tab 1: 師傅 */}

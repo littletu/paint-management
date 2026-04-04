@@ -15,11 +15,12 @@ import { Trash2 } from 'lucide-react'
 interface Props {
   project?: Project
   customers: Customer[]
+  onSaved?: () => void
 }
 
 const selectCls = 'w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
-export function ProjectForm({ project, customers }: Props) {
+export function ProjectForm({ project, customers, onSaved }: Props) {
   const router = useRouter()
   const supabase = createClient()
   const isEdit = !!project
@@ -58,6 +59,7 @@ export function ProjectForm({ project, customers }: Props) {
       if (error) { toast.error('更新失敗：' + error.message); setLoading(false); return }
       toast.success('工程資料已更新')
       router.refresh()
+      onSaved?.()
     } else {
       const { data, error } = await supabase.from('projects').insert(payload).select().single()
       if (error) { toast.error('新增失敗：' + error.message); setLoading(false); return }
