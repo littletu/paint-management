@@ -4,7 +4,7 @@ import { ProjectForm } from '@/components/forms/ProjectForm'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { ArrowLeft, Users, FileText, ExternalLink, Receipt, Calendar } from 'lucide-react'
+import { ArrowLeft, Users, FileText, ExternalLink, Receipt, Calendar, ShoppingCart } from 'lucide-react'
 import { AssignWorkerForm } from '@/components/forms/AssignWorkerForm'
 import { formatCurrency, formatDate } from '@/lib/utils/date'
 import { ProjectTabs } from '@/components/project/ProjectTabs'
@@ -42,7 +42,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     supabase.from('workers').select('*, profile:profiles(full_name)').eq('is_active', true),
     supabase.from('worker_receipts').select('*, worker:workers(profile:profiles(full_name))').eq('project_id', id).order('receipt_date', { ascending: false }),
     supabase.from('invoices').select('id, invoice_number, total, status').eq('project_id', id).order('created_at', { ascending: false }),
-    supabase.from('expenses').select('amount').eq('project_id', id),
+    supabase.from('expenses').select('id, date, category, amount, description, receipt_url, receipt_name').eq('project_id', id).order('date', { ascending: false }),
   ])
 
   if (!project) notFound()
@@ -61,10 +61,18 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const totalReceipts = (receipts ?? []).reduce((s: number, r: any) => s + (r.amount ?? 0), 0)
   const remaining = contractAmount - totalInvoiced
 
+  const categoryLabel: Record<string, string> = {
+    material: '材料',
+    tool: '工具',
+    transportation: '交通',
+    other: '其他',
+  }
+
   const tabs = [
     { key: 'info', label: '工程資訊' },
     { key: 'workers', label: '師傅', count: assignments?.length ?? 0 },
     { key: 'invoices', label: '請款單', count: invoiceList.length },
+    { key: 'expenses', label: '開銷', count: (expenses ?? []).length },
     { key: 'receipts', label: '師傅發票', count: receipts?.length ?? 0 },
   ]
 
@@ -219,7 +227,57 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           </Card>
         </div>
 
-        {/* Tab 3: 師傅發票 */}
+        {/* Tab 3: 開銷 */}
+        <div>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4" />
+                工程開銷（{(expenses ?? []).length} 筆）
+                {totalExpenses > 0 && (
+                  <span className="ml-auto text-sm font-normal text-gray-500">
+                    合計 {formatCurrency(totalExpenses)}
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              {!(expenses ?? []).length ? (
+                <p className="text-center text-gray-400 py-8 text-sm">此工程尚無開銷記錄</p>
+              ) : (
+                <div className="divide-y divide-gray-50">
+                  {(expenses ?? []).map((e: any) => (
+                    <div key={e.id} className="px-5 py-3.5 flex items-center justify-between hover:bg-gray-50">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900 truncate">{e.description || '—'}</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 shrink-0">
+                            {categoryLabel[e.category] ?? e.category}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs text-gray-400">{formatDate(e.date)}</p>
+                          {e.receipt_url && (
+                            <a href={e.receipt_url} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline">
+                              <ExternalLink className="w-3 h-3" />
+                              {e.receipt_name ?? '查看附件'}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <span className="font-semibold text-sm text-gray-800 shrink-0 ml-3">
+                        {formatCurrency(e.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Tab 4: 師傅發票 */}
         <div>
           <Card>
             <CardHeader className="pb-3">
