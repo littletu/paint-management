@@ -7,6 +7,7 @@ import { formatDate, formatCurrency } from '@/lib/utils/date'
 import { InvoicePrintButton } from '@/components/invoice/InvoicePrintButton'
 import { InvoiceStatusActions } from '@/components/invoice/InvoiceStatusActions'
 import { InvoicePayments } from '@/components/invoice/InvoicePayments'
+import { InvoiceDeleteButton } from '@/components/invoice/InvoiceDeleteButton'
 
 const statusLabel: Record<string, string> = {
   draft: '草稿',
@@ -67,6 +68,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <InvoiceDeleteButton invoiceId={id} invoiceNumber={invoice.invoice_number} />
           <InvoiceStatusActions invoiceId={id} status={invoice.status} />
           <InvoicePrintButton />
         </div>
