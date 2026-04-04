@@ -27,9 +27,10 @@ interface Props {
   projectId: string
   expenses: Expense[]
   totalExpenses: number
+  categories?: Array<{ id: string; name: string }>
 }
 
-export function ProjectExpensesTab({ projectId, expenses, totalExpenses }: Props) {
+export function ProjectExpensesTab({ projectId, expenses, totalExpenses, categories }: Props) {
   const [showForm, setShowForm] = useState(false)
 
   return (
@@ -56,6 +57,7 @@ export function ProjectExpensesTab({ projectId, expenses, totalExpenses }: Props
         <div className="px-5 pb-4 border-b border-gray-100">
           <ExpenseForm
             projects={[{ id: projectId, name: '' }]}
+            categories={categories}
             defaultProjectId={projectId}
             onSaved={() => setShowForm(false)}
           />

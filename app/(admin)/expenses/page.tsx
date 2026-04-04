@@ -42,10 +42,11 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
   if (dateFrom) receiptQuery = receiptQuery.gte('receipt_date', dateFrom)
   if (dateTo) receiptQuery = receiptQuery.lte('receipt_date', dateTo)
 
-  const [{ data: expenses }, { data: projects }, { data: receipts }] = await Promise.all([
+  const [{ data: expenses }, { data: projects }, { data: receipts }, { data: expenseCategories }] = await Promise.all([
     expenseQuery,
     supabase.from('projects').select('id, name').order('name'),
     receiptQuery,
+    supabase.from('expense_categories').select('id, name').order('sort_order'),
   ])
 
   const projectExpenses = (expenses ?? []).filter((e: any) => e.expense_type === 'project' || (!e.expense_type && e.project_id))
@@ -75,7 +76,7 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1">
-          <ExpenseForm projects={(projects ?? []).filter((p: any) => true)} />
+          <ExpenseForm projects={projects ?? []} categories={expenseCategories ?? []} />
         </div>
 
         <div className="lg:col-span-2 space-y-6">

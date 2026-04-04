@@ -13,6 +13,7 @@ import {
   BookOpen,
   Receipt,
   ClipboardList,
+  Settings,
   LogOut,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
@@ -28,6 +29,7 @@ const navItems = [
   { href: '/expenses', label: '開銷管理', icon: Receipt },
   { href: '/invoices', label: '請款管理', icon: ClipboardList },
   { href: '/accounting', label: '帳目總覽', icon: BookOpen },
+  { href: '/system', label: '系統管理', icon: Settings },
 ]
 
 export function AdminSidebar() {

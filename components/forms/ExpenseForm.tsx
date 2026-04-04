@@ -14,13 +14,22 @@ import { Plus, Upload, X, FileText } from 'lucide-react'
 
 interface Props {
   projects: Array<{ id: string; name: string }>
+  categories?: Array<{ id: string; name: string }>
   defaultProjectId?: string
   onSaved?: () => void
 }
 
 const selectCls = 'w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
-export function ExpenseForm({ projects, defaultProjectId, onSaved }: Props) {
+const DEFAULT_CATEGORIES = [
+  { id: 'material', name: '材料' },
+  { id: 'tool', name: '工具' },
+  { id: 'transportation', name: '交通' },
+  { id: 'other', name: '其他' },
+]
+
+export function ExpenseForm({ projects, categories, defaultProjectId, onSaved }: Props) {
+  const categoryList = (categories && categories.length > 0) ? categories : DEFAULT_CATEGORIES
   const router = useRouter()
   const supabase = createClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -29,7 +38,7 @@ export function ExpenseForm({ projects, defaultProjectId, onSaved }: Props) {
   const [form, setForm] = useState({
     project_id: defaultProjectId ?? '',
     date: todayString(),
-    category: 'material' as const,
+    category: '',
     amount: '',
     description: '',
   })
@@ -89,7 +98,7 @@ export function ExpenseForm({ projects, defaultProjectId, onSaved }: Props) {
     if (error) { toast.error('新增失敗：' + error.message); setLoading(false); return }
     toast.success('開銷已記錄')
     setExpenseType(defaultProjectId ? 'project' : 'project')
-    setForm({ project_id: defaultProjectId ?? '', date: todayString(), category: 'material', amount: '', description: '' })
+    setForm({ project_id: defaultProjectId ?? '', date: todayString(), category: '', amount: '', description: '' })
     setFile(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
     router.refresh()
@@ -148,10 +157,10 @@ export function ExpenseForm({ projects, defaultProjectId, onSaved }: Props) {
             <div className="space-y-1.5">
               <Label>類別</Label>
               <select name="category" value={form.category} onChange={handleChange} className={selectCls}>
-                <option value="material">材料</option>
-                <option value="tool">工具</option>
-                <option value="transportation">交通</option>
-                <option value="other">其他</option>
+                <option value="">選擇類別</option>
+                {categoryList.map(c => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
               </select>
             </div>
           </div>
