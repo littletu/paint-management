@@ -26,7 +26,7 @@ export function InvoiceDeleteButton({ invoiceId, invoiceNumber, status }: { invo
     router.refresh()
   }
 
-  if (status !== 'draft') return null
+  if (status !== 'draft' && status !== 'cancelled') return null
 
   if (confirming) {
     return (
