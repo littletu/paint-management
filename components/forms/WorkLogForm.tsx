@@ -155,10 +155,17 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
           d.setDate(d.getDate() + i)
           return d.toISOString().split('T')[0]
         })
+        // Allow up to end of current week (Sunday)
+        const thisSunday = (() => {
+          const d = new Date(today + 'T12:00:00')
+          const daysUntilSunday = d.getDay() === 0 ? 0 : 7 - d.getDay()
+          d.setDate(d.getDate() + daysUntilSunday)
+          return d.toISOString().split('T')[0]
+        })()
         const canGoNext = (() => {
           const d = new Date(weekStart + 'T12:00:00')
           d.setDate(d.getDate() + 7)
-          return d.toISOString().split('T')[0] <= today
+          return d.toISOString().split('T')[0] <= thisSunday
         })()
         const weekLabel = `${weekDays[0].slice(5).replace('-', '/')} ~ ${weekDays[6].slice(5).replace('-', '/')}`
         return (
@@ -216,7 +223,7 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
                 const d = new Date(date + 'T12:00:00')
                 const dow = d.getDay()
                 const isSelected = date === selectedDate
-                const isFuture = date > today
+                const isFuture = date > thisSunday
                 const isToday = date === today
                 return (
                   <button
