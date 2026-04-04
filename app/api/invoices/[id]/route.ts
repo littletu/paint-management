@@ -51,6 +51,10 @@ export async function DELETE(
     .from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return NextResponse.json({ error: '權限不足' }, { status: 403 })
 
+  const { data: invoice } = await supabase.from('invoices').select('status').eq('id', id).single()
+  if (!invoice) return NextResponse.json({ error: '找不到請款單' }, { status: 404 })
+  if (invoice.status !== 'draft') return NextResponse.json({ error: '只有草稿狀態的請款單可以刪除' }, { status: 400 })
+
   const { error } = await supabase.from('invoices').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

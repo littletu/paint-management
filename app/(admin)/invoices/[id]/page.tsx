@@ -68,7 +68,7 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <InvoiceDeleteButton invoiceId={id} invoiceNumber={invoice.invoice_number} />
+          <InvoiceDeleteButton invoiceId={id} invoiceNumber={invoice.invoice_number} status={invoice.status} />
           <InvoiceStatusActions invoiceId={id} status={invoice.status} />
           <InvoicePrintButton />
         </div>

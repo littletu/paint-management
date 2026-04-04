@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Trash2 } from 'lucide-react'
 
-export function InvoiceDeleteButton({ invoiceId, invoiceNumber }: { invoiceId: string; invoiceNumber: string }) {
+export function InvoiceDeleteButton({ invoiceId, invoiceNumber, status }: { invoiceId: string; invoiceNumber: string; status: string }) {
   const router = useRouter()
   const [confirming, setConfirming] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -25,6 +25,8 @@ export function InvoiceDeleteButton({ invoiceId, invoiceNumber }: { invoiceId: s
     router.push('/invoices')
     router.refresh()
   }
+
+  if (status !== 'draft') return null
 
   if (confirming) {
     return (
