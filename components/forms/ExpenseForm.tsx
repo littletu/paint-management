@@ -14,17 +14,19 @@ import { Plus, Upload, X, FileText } from 'lucide-react'
 
 interface Props {
   projects: Array<{ id: string; name: string }>
+  defaultProjectId?: string
+  onSaved?: () => void
 }
 
 const selectCls = 'w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
-export function ExpenseForm({ projects }: Props) {
+export function ExpenseForm({ projects, defaultProjectId, onSaved }: Props) {
   const router = useRouter()
   const supabase = createClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [form, setForm] = useState({
-    project_id: '',
+    project_id: defaultProjectId ?? '',
     date: todayString(),
     category: 'material' as const,
     amount: '',
@@ -84,11 +86,12 @@ export function ExpenseForm({ projects }: Props) {
 
     if (error) { toast.error('新增失敗：' + error.message); setLoading(false); return }
     toast.success('開銷已記錄')
-    setForm({ project_id: '', date: todayString(), category: 'material', amount: '', description: '' })
+    setForm({ project_id: defaultProjectId ?? '', date: todayString(), category: 'material', amount: '', description: '' })
     setFile(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
     router.refresh()
     setLoading(false)
+    onSaved?.()
   }
 
   return (
@@ -101,13 +104,15 @@ export function ExpenseForm({ projects }: Props) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div className="space-y-1.5">
-            <Label>工程</Label>
-            <select name="project_id" value={form.project_id} onChange={handleChange} className={selectCls}>
-              <option value="">選擇工程</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </div>
+          {!defaultProjectId && (
+            <div className="space-y-1.5">
+              <Label>工程</Label>
+              <select name="project_id" value={form.project_id} onChange={handleChange} className={selectCls}>
+                <option value="">選擇工程</option>
+                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>日期</Label>
