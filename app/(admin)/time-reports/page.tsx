@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDate, formatCurrency } from '@/lib/utils/date'
 import { TimeReportFilters } from '@/components/tables/TimeReportFilters'
+import Link from 'next/link'
+import { Plus } from 'lucide-react'
 
 interface SearchParams {
   worker_id?: string
@@ -43,8 +45,15 @@ export default async function TimeReportsPage({
 
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">工時報表</h1>
+        <Link
+          href="/time-reports/bulk-add"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-orange-600 hover:text-orange-700 border border-orange-200 hover:border-orange-300 px-3 py-2 rounded-lg transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          批量新增工時
+        </Link>
       </div>
 
       <TimeReportFilters
