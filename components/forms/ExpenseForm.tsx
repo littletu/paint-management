@@ -15,6 +15,7 @@ import { Plus, Upload, X, FileText } from 'lucide-react'
 interface Props {
   projects: Array<{ id: string; name: string }>
   categories?: Array<{ id: string; name: string }>
+  companyCategories?: Array<{ id: string; name: string }>
   defaultProjectId?: string
   onSaved?: () => void
 }
@@ -28,8 +29,9 @@ const DEFAULT_CATEGORIES = [
   { id: 'other', name: '其他' },
 ]
 
-export function ExpenseForm({ projects, categories, defaultProjectId, onSaved }: Props) {
-  const categoryList = (categories && categories.length > 0) ? categories : DEFAULT_CATEGORIES
+export function ExpenseForm({ projects, categories, companyCategories, defaultProjectId, onSaved }: Props) {
+  const projectCategoryList = (categories && categories.length > 0) ? categories : DEFAULT_CATEGORIES
+  const companyCategoryList = (companyCategories && companyCategories.length > 0) ? companyCategories : DEFAULT_CATEGORIES
   const router = useRouter()
   const supabase = createClient()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -125,7 +127,7 @@ export function ExpenseForm({ projects, categories, defaultProjectId, onSaved }:
                   <button
                     key={type}
                     type="button"
-                    onClick={() => { setExpenseType(type); setForm(f => ({ ...f, project_id: '' })) }}
+                    onClick={() => { setExpenseType(type); setForm(f => ({ ...f, project_id: '', category: '' })) }}
                     className={`flex-1 py-1.5 text-sm font-medium transition-colors ${
                       expenseType === type
                         ? 'bg-orange-500 text-white'
@@ -158,7 +160,7 @@ export function ExpenseForm({ projects, categories, defaultProjectId, onSaved }:
               <Label>類別</Label>
               <select name="category" value={form.category} onChange={handleChange} className={selectCls}>
                 <option value="">選擇類別</option>
-                {categoryList.map(c => (
+                {(expenseType === 'company' ? companyCategoryList : projectCategoryList).map(c => (
                   <option key={c.id} value={c.name}>{c.name}</option>
                 ))}
               </select>
