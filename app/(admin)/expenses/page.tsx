@@ -42,13 +42,15 @@ export default async function ExpensesPage({ searchParams }: { searchParams: Pro
   if (dateFrom) receiptQuery = receiptQuery.gte('receipt_date', dateFrom)
   if (dateTo) receiptQuery = receiptQuery.lte('receipt_date', dateTo)
 
-  const [{ data: expenses }, { data: projects }, { data: receipts }, { data: expenseCategories }, { data: companyExpenseCategories }] = await Promise.all([
+  const [{ data: expenses }, { data: projects }, { data: receipts }, { data: allExpenseCategories }] = await Promise.all([
     expenseQuery,
     supabase.from('projects').select('id, name').order('name'),
     receiptQuery,
-    supabase.from('expense_categories').select('id, name').order('sort_order'),
-    supabase.from('company_expense_categories').select('id, name').order('sort_order'),
+    supabase.from('expense_categories').select('id, name, scope').order('sort_order'),
   ])
+
+  const expenseCategories = (allExpenseCategories ?? []).filter((c: any) => c.scope === 'project')
+  const companyExpenseCategories = (allExpenseCategories ?? []).filter((c: any) => c.scope === 'company')
 
   const projectExpenses = (expenses ?? []).filter((e: any) => e.expense_type === 'project' || (!e.expense_type && e.project_id))
   const companyExpenses = (expenses ?? []).filter((e: any) => e.expense_type === 'company' || (!e.expense_type && !e.project_id))

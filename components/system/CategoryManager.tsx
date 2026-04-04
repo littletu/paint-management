@@ -17,12 +17,13 @@ interface Category {
 
 interface Props {
   title: string
-  tableName: 'expense_categories' | 'project_categories'
+  tableName: 'expense_categories' | 'project_categories' | 'company_expense_categories'
   categories: Category[]
   icon?: React.ReactNode
+  scope?: string
 }
 
-export function CategoryManager({ title, tableName, categories: init, icon }: Props) {
+export function CategoryManager({ title, tableName, categories: init, icon, scope }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const [categories, setCategories] = useState(init)
@@ -36,7 +37,7 @@ export function CategoryManager({ title, tableName, categories: init, icon }: Pr
     const maxOrder = categories.reduce((m, c) => Math.max(m, c.sort_order), 0)
     const { data, error } = await supabase
       .from(tableName)
-      .insert({ name: newName.trim(), sort_order: maxOrder + 1 })
+      .insert({ name: newName.trim(), sort_order: maxOrder + 1, ...(scope ? { scope } : {}) })
       .select()
       .single()
     if (error) { toast.error('新增失敗：' + error.message); return }

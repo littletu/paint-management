@@ -45,7 +45,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     supabase.from('worker_receipts').select('*, worker:workers(profile:profiles(full_name))').eq('project_id', id).order('receipt_date', { ascending: false }),
     supabase.from('invoices').select('id, invoice_number, total, status').eq('project_id', id).order('created_at', { ascending: false }),
     supabase.from('expenses').select('id, date, category, amount, description, receipt_url, receipt_name').eq('project_id', id).order('date', { ascending: false }),
-    supabase.from('expense_categories').select('id, name').order('sort_order'),
+    supabase.from('expense_categories').select('id, name, scope').eq('scope', 'project').order('sort_order'),
   ])
 
   if (!project) notFound()

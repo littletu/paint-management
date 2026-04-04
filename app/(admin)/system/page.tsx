@@ -5,10 +5,13 @@ import { Tag } from 'lucide-react'
 export default async function SystemPage() {
   const supabase = await createClient()
 
-  const [{ data: expenseCategories }, { data: companyExpenseCategories }] = await Promise.all([
-    supabase.from('expense_categories').select('id, name, sort_order').order('sort_order'),
-    supabase.from('company_expense_categories').select('id, name, sort_order').order('sort_order'),
-  ])
+  const { data: allCategories } = await supabase
+    .from('expense_categories')
+    .select('id, name, sort_order, scope')
+    .order('sort_order')
+
+  const expenseCategories = (allCategories ?? []).filter(c => c.scope === 'project')
+  const companyExpenseCategories = (allCategories ?? []).filter(c => c.scope === 'company')
 
   return (
     <div className="max-w-2xl">
@@ -21,15 +24,17 @@ export default async function SystemPage() {
         <CategoryManager
           title="工程開銷分類"
           tableName="expense_categories"
-          categories={expenseCategories ?? []}
+          categories={expenseCategories}
           icon={<Tag className="w-4 h-4" />}
+          scope="project"
         />
 
         <CategoryManager
           title="公司開銷分類"
-          tableName="company_expense_categories"
-          categories={companyExpenseCategories ?? []}
+          tableName="expense_categories"
+          categories={companyExpenseCategories}
           icon={<Tag className="w-4 h-4" />}
+          scope="company"
         />
       </div>
     </div>
