@@ -31,6 +31,7 @@ export interface Customer {
   contact_person: string | null
   phone: string | null
   address: string | null
+  tax_id: string | null
   notes: string | null
   created_at: string
 }

@@ -26,6 +26,7 @@ export function CustomerForm({ customer }: Props) {
     contact_person: customer?.contact_person ?? '',
     phone: customer?.phone ?? '',
     address: customer?.address ?? '',
+    tax_id: customer?.tax_id ?? '',
     notes: customer?.notes ?? '',
   })
   const [loading, setLoading] = useState(false)
@@ -84,6 +85,10 @@ export function CustomerForm({ customer }: Props) {
             <div className="space-y-1.5">
               <Label htmlFor="address">地址</Label>
               <Input id="address" name="address" value={form.address} onChange={handleChange} placeholder="地址" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="tax_id">統一編號</Label>
+              <Input id="tax_id" name="tax_id" value={form.tax_id} onChange={handleChange} placeholder="12345678" maxLength={8} />
             </div>
           </div>
           <div className="space-y-1.5">
