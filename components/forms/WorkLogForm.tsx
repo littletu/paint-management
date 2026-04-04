@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { formatDate } from '@/lib/utils/date'
-import { CheckCircle2, Plus, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
+import { CheckCircle2, Plus, ChevronLeft, ChevronRight, Calendar, Pencil, Trash2 } from 'lucide-react'
 import type { TimeEntry } from '@/types'
 
 interface Project {
@@ -262,22 +262,44 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
             {formatDate(selectedDate)} 已填記錄
           </p>
           {dateEntries.map((entry: any) => (
-            <button
+            <div
               key={entry.id}
-              onClick={() => startEdit(entry)}
-              className="w-full text-left p-3 bg-green-50 rounded-lg border border-green-100 hover:bg-green-100 transition-colors"
+              className="w-full text-left p-3 bg-green-50 rounded-lg border border-green-100"
             >
-              <div className="flex justify-between items-center">
-                <p className="font-medium text-sm text-gray-900">{entry.project?.name ?? '工程'}</p>
-                <Badge variant="secondary" className="text-xs">點擊編輯</Badge>
+              <div className="flex justify-between items-start gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm text-gray-900">{entry.project?.name ?? '工程'}</p>
+                  <p className="text-xs text-gray-600 mt-1">
+                    工作 {entry.regular_days}天 ／ 加班 {entry.overtime_hours}h
+                  </p>
+                  {entry.work_progress && (
+                    <p className="text-xs text-gray-500 mt-1 line-clamp-2">📝 {entry.work_progress}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => startEdit(entry)}
+                    className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-orange-600 hover:border-orange-300 transition-colors"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    編輯
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!confirm('確定要刪除這筆工時記錄？')) return
+                      const { error } = await supabase.from('time_entries').delete().eq('id', entry.id)
+                      if (error) { toast.error('刪除失敗：' + error.message); return }
+                      toast.success('已刪除')
+                      router.refresh()
+                    }}
+                    className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-300 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    移除
+                  </button>
+                </div>
               </div>
-              <p className="text-xs text-gray-600 mt-1">
-                工作 {entry.regular_days}天 ／ 加班 {entry.overtime_hours}h
-              </p>
-              {entry.work_progress && (
-                <p className="text-xs text-gray-500 mt-1 line-clamp-2">📝 {entry.work_progress}</p>
-              )}
-            </button>
+            </div>
           ))}
         </div>
       )}
