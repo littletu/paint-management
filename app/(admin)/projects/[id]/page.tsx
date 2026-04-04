@@ -5,11 +5,12 @@ import { ProjectExpensesTab } from '@/components/project/ProjectExpensesTab'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { ArrowLeft, Users, FileText, ExternalLink, Receipt, Calendar } from 'lucide-react'
+import { ArrowLeft, Users, FileText, ExternalLink, Receipt, Calendar, Clock } from 'lucide-react'
 import { AssignWorkerForm } from '@/components/forms/AssignWorkerForm'
 import { formatCurrency, formatDate } from '@/lib/utils/date'
 import { ProjectTabs } from '@/components/project/ProjectTabs'
 import { ProjectTimeEntriesTab } from '@/components/project/ProjectTimeEntriesTab'
+import { AdminReceiptRow } from '@/components/forms/AdminReceiptRow'
 
 const statusLabel: Record<string, string> = {
   pending: '待開工',
@@ -269,31 +270,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               {!receipts?.length ? (
                 <p className="text-center text-gray-400 py-8 text-sm">此工程尚無師傅發票記錄</p>
               ) : (
-                <div className="divide-y divide-gray-50">
+                <div>
                   {receipts.map((r: any) => (
-                    <div key={r.id} className="px-5 py-3.5 flex items-center justify-between hover:bg-gray-50">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900 truncate">{r.description}</span>
-                          <Badge variant="outline" className="text-xs shrink-0">
-                            {(r.worker as any)?.profile?.full_name}
-                          </Badge>
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-xs text-gray-400">{formatDate(r.receipt_date)}</p>
-                          {r.file_url && (
-                            <a href={r.file_url} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-xs text-blue-500 hover:underline">
-                              <ExternalLink className="w-3 h-3" />
-                              {r.file_name ?? '查看附件'}
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                      <span className="font-semibold text-sm text-gray-800 shrink-0 ml-3">
-                        {r.amount != null ? formatCurrency(r.amount) : '—'}
-                      </span>
-                    </div>
+                    <AdminReceiptRow key={r.id} receipt={r} />
                   ))}
                 </div>
               )}
