@@ -189,10 +189,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
                 <FileText className="w-4 h-4" />
                 請款單（{invoiceList.length} 筆）
                 {totalInvoiced > 0 && (
-                  <span className="ml-auto text-sm font-normal text-gray-500">
+                  <span className="text-sm font-normal text-gray-500">
                     合計 {formatCurrency(totalInvoiced)}
                   </span>
                 )}
+                <Link
+                  href={`/invoices/new?project_id=${id}`}
+                  className="ml-auto flex items-center gap-1 text-xs font-medium text-orange-600 hover:text-orange-700 border border-orange-200 hover:border-orange-300 px-2.5 py-1 rounded-lg transition-colors"
+                >
+                  <span>＋</span> 新增請款單
+                </Link>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">

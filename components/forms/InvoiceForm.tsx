@@ -27,6 +27,7 @@ interface ProjectOption {
 interface Props {
   customers: CustomerOption[]
   projects: ProjectOption[]
+  defaultProjectId?: string
 }
 
 interface LineItem {
@@ -42,11 +43,12 @@ function emptyItem(): LineItem {
   return { description: '', quantity: '1', unit_price: '' }
 }
 
-export function InvoiceForm({ customers, projects }: Props) {
+export function InvoiceForm({ customers, projects, defaultProjectId }: Props) {
   const router = useRouter()
 
-  const [customerId, setCustomerId] = useState('')
-  const [projectId, setProjectId] = useState('')
+  const defaultProject = defaultProjectId ? projects.find(p => p.id === defaultProjectId) : null
+  const [customerId, setCustomerId] = useState(defaultProject?.customer_id ?? '')
+  const [projectId, setProjectId] = useState(defaultProjectId ?? '')
   const [issueDate, setIssueDate] = useState(todayString())
   const [dueDate, setDueDate] = useState('')
   const [taxRate, setTaxRate] = useState('0')
