@@ -1,19 +1,29 @@
 import { createClient } from '@/lib/supabase/server'
 import { CategoryManager } from '@/components/system/CategoryManager'
 import { KnowledgeCategoryManager } from '@/components/system/KnowledgeCategoryManager'
+import { KnowledgeTagManager } from '@/components/system/KnowledgeTagManager'
 import { UserManager } from '@/components/system/UserManager'
 import { ProjectTabs } from '@/components/project/ProjectTabs'
 import { Tag, Users } from 'lucide-react'
+import type { KnowledgeTagGroup } from '@/types'
 
 export default async function SystemPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [{ data: allCategories }, { data: profiles }, { data: knowledgeCategories }] = await Promise.all([
+  const [{ data: allCategories }, { data: profiles }, { data: knowledgeCategories }, { data: rawTagGroups }] = await Promise.all([
     supabase.from('expense_categories').select('id, name, sort_order, scope').order('sort_order'),
     supabase.from('profiles').select('id, full_name, role, allowed_sections').order('full_name'),
     supabase.from('knowledge_categories').select('id, name, color, points, sort_order').order('sort_order'),
+    supabase.from('knowledge_tag_groups').select('id, label, sort_order, knowledge_tags(id, label, sort_order)').order('sort_order'),
   ])
+
+  const tagGroups: KnowledgeTagGroup[] = (rawTagGroups ?? []).map(g => ({
+    id: g.id,
+    label: g.label,
+    sort_order: g.sort_order,
+    tags: ((g as any).knowledge_tags ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order),
+  }))
 
   const expenseCategories = (allCategories ?? []).filter(c => c.scope === 'project')
   const companyExpenseCategories = (allCategories ?? []).filter(c => c.scope === 'company')
@@ -43,6 +53,7 @@ export default async function SystemPage() {
           <KnowledgeCategoryManager
             categories={knowledgeCategories ?? []}
           />
+          <KnowledgeTagManager groups={tagGroups} />
           <CategoryManager
             title="工程開銷分類"
             tableName="expense_categories"

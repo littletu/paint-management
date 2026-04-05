@@ -10,7 +10,7 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { MessageCircle, ChevronDown, ChevronUp, MapPin, ImageIcon, Pencil, X, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { KnowledgeTip, KnowledgeComment } from '@/types'
+import type { KnowledgeTip, KnowledgeComment, KnowledgeTagGroup } from '@/types'
 import { KNOWLEDGE_COLOR_CLASSES } from '@/types'
 import { TagSelector } from '@/components/knowledge/TagSelector'
 
@@ -28,9 +28,10 @@ function formatDate(s: string) {
 interface Props {
   tip: KnowledgeTip
   currentWorkerId: string
+  tagGroups: KnowledgeTagGroup[]
 }
 
-export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
+export function KnowledgeTipCard({ tip, currentWorkerId, tagGroups }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const [expanded, setExpanded] = useState(false)
@@ -186,7 +187,7 @@ export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
                 </div>
                 <div>
                   <label className="text-[10px] font-semibold text-gray-500 mb-2 block">標籤</label>
-                  <TagSelector selected={editTags} onChange={setEditTags} />
+                  <TagSelector groups={tagGroups} selected={editTags} onChange={setEditTags} />
                 </div>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleSave} disabled={saving} className="flex-1 gap-1.5">

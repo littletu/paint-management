@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import type { KnowledgeDBCategory } from '@/types'
+import type { KnowledgeDBCategory, KnowledgeTagGroup } from '@/types'
 import { TagSelector } from '@/components/knowledge/TagSelector'
 
 interface Tip {
@@ -26,9 +26,10 @@ interface Tip {
 interface Props {
   tip: Tip
   categories: KnowledgeDBCategory[]
+  tagGroups: KnowledgeTagGroup[]
 }
 
-export function AdminKnowledgeActions({ tip, categories }: Props) {
+export function AdminKnowledgeActions({ tip, categories, tagGroups }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -130,7 +131,7 @@ export function AdminKnowledgeActions({ tip, categories }: Props) {
 
         <div>
           <label className="text-xs font-medium text-gray-500 mb-2 block">標籤</label>
-          <TagSelector selected={editTags} onChange={setEditTags} />
+          <TagSelector groups={tagGroups} selected={editTags} onChange={setEditTags} />
         </div>
 
         <div className="flex gap-2 pt-1">

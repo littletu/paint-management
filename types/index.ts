@@ -40,16 +40,12 @@ export interface KnowledgeDBCategory {
 
 export const COMMENT_POINTS = 2   // fixed points per knowledge comment
 
-export const KNOWLEDGE_TAG_GROUPS = [
-  {
-    label: '施工項目',
-    tags: ['水泥牆', '磁磚面', '木作面', '舊漆面', '矽酸面', '石膏板', '外牆', '特殊漆', '水性漆', '油性漆'],
-  },
-  {
-    label: '現場狀況',
-    tags: ['新作', '舊屋', '潮濕環境', '高樓層', '壁癌', '裂縫', '問題牆面'],
-  },
-] as const
+export interface KnowledgeTagGroup {
+  id: string
+  label: string
+  sort_order: number
+  tags: { id: string; label: string; sort_order: number }[]
+}
 
 /** Maps color key (stored in DB) → Tailwind badge classes */
 export const KNOWLEDGE_COLOR_CLASSES: Record<string, string> = {

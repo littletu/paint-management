@@ -4,7 +4,7 @@ import { KnowledgeTipForm } from '@/components/forms/KnowledgeTipForm'
 import { KnowledgeTipCard } from '@/components/knowledge/KnowledgeTipCard'
 import { Lightbulb, Trophy } from 'lucide-react'
 import Link from 'next/link'
-import type { KnowledgeTip } from '@/types'
+import type { KnowledgeTip, KnowledgeTagGroup } from '@/types'
 
 export default async function WorkerKnowledgePage() {
   const user = await getAuthUser()
@@ -13,7 +13,7 @@ export default async function WorkerKnowledgePage() {
   const workerId = await getWorkerIdByProfileId(user.id)
   const supabase = await createClient()
 
-  const [{ data: tips }, { data: projects }, { data: knowledgeCategories }] = await Promise.all([
+  const [{ data: tips }, { data: projects }, { data: knowledgeCategories }, { data: rawTagGroups }] = await Promise.all([
     supabase
       .from('knowledge_tips')
       .select(`
@@ -38,7 +38,18 @@ export default async function WorkerKnowledgePage() {
       .from('knowledge_categories')
       .select('id, name, color, points, sort_order')
       .order('sort_order'),
+    supabase
+      .from('knowledge_tag_groups')
+      .select('id, label, sort_order, knowledge_tags(id, label, sort_order)')
+      .order('sort_order'),
   ])
+
+  const tagGroups: KnowledgeTagGroup[] = (rawTagGroups ?? []).map(g => ({
+    id: g.id,
+    label: g.label,
+    sort_order: g.sort_order,
+    tags: ((g as any).knowledge_tags ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order),
+  }))
 
   return (
     <div>
@@ -69,6 +80,7 @@ export default async function WorkerKnowledgePage() {
             workerId={workerId}
             projects={projects ?? []}
             categories={knowledgeCategories ?? []}
+            tagGroups={tagGroups}
           />
         </div>
       )}
@@ -87,6 +99,7 @@ export default async function WorkerKnowledgePage() {
               key={tip.id}
               tip={tip}
               currentWorkerId={workerId ?? ''}
+              tagGroups={tagGroups}
             />
           ))}
         </div>

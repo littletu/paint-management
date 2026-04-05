@@ -10,14 +10,14 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { Lightbulb, ChevronDown, ChevronUp, ImagePlus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { KnowledgeDBCategory } from '@/types'
+import type { KnowledgeDBCategory, KnowledgeTagGroup } from '@/types'
 import { compressImage } from '@/lib/utils/compress-image'
 import { TagSelector } from '@/components/knowledge/TagSelector'
 
 interface Project { id: string; name: string }
-interface Props { workerId: string; projects: Project[]; categories: KnowledgeDBCategory[] }
+interface Props { workerId: string; projects: Project[]; categories: KnowledgeDBCategory[]; tagGroups: KnowledgeTagGroup[] }
 
-export function KnowledgeTipForm({ workerId, projects, categories }: Props) {
+export function KnowledgeTipForm({ workerId, projects, categories, tagGroups }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -144,7 +144,7 @@ export function KnowledgeTipForm({ workerId, projects, categories }: Props) {
                   <span className="ml-1.5 text-orange-500">（已選 {selectedTags.length} 個）</span>
                 )}
               </label>
-              <TagSelector selected={selectedTags} onChange={setSelectedTags} />
+              <TagSelector groups={tagGroups} selected={selectedTags} onChange={setSelectedTags} />
             </div>
 
             {/* 內容 */}

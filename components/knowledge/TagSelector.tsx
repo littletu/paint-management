@@ -1,37 +1,40 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { KNOWLEDGE_TAG_GROUPS } from '@/types'
+import type { KnowledgeTagGroup } from '@/types'
 
 interface Props {
+  groups: KnowledgeTagGroup[]
   selected: string[]
   onChange: (tags: string[]) => void
 }
 
-export function TagSelector({ selected, onChange }: Props) {
-  function toggle(tag: string) {
+export function TagSelector({ groups, selected, onChange }: Props) {
+  function toggle(label: string) {
     onChange(
-      selected.includes(tag)
-        ? selected.filter(t => t !== tag)
-        : [...selected, tag]
+      selected.includes(label)
+        ? selected.filter(t => t !== label)
+        : [...selected, label]
     )
   }
 
+  if (!groups.length) return null
+
   return (
     <div className="space-y-2.5">
-      {KNOWLEDGE_TAG_GROUPS.map(group => (
-        <div key={group.label}>
+      {groups.map(group => (
+        <div key={group.id}>
           <p className="text-[10px] font-semibold text-gray-400 mb-1.5 uppercase tracking-wide">
             {group.label}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {group.tags.map(tag => {
-              const active = selected.includes(tag)
+              const active = selected.includes(tag.label)
               return (
                 <button
-                  key={tag}
+                  key={tag.id}
                   type="button"
-                  onClick={() => toggle(tag)}
+                  onClick={() => toggle(tag.label)}
                   className={cn(
                     'text-xs px-2.5 py-1 rounded-full border transition-colors',
                     active
@@ -39,7 +42,7 @@ export function TagSelector({ selected, onChange }: Props) {
                       : 'bg-white border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-600'
                   )}
                 >
-                  {tag}
+                  {tag.label}
                 </button>
               )
             })}

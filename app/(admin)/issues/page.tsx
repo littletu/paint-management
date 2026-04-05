@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lightbulb, MessageCircle, MapPin, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { KnowledgeTip } from '@/types'
+import type { KnowledgeTip, KnowledgeTagGroup } from '@/types'
 import { KNOWLEDGE_COLOR_CLASSES } from '@/types'
 import { AdminKnowledgeActions } from '@/components/knowledge/AdminKnowledgeActions'
 import { AdminCommentRow } from '@/components/knowledge/AdminCommentRow'
@@ -25,7 +25,7 @@ const statusLabel: Record<string, string> = {
   rejected: '已駁回',
 }
 
-function TipRow({ tip, categories }: { tip: KnowledgeTip; categories: any[] }) {
+function TipRow({ tip, categories, tagGroups }: { tip: KnowledgeTip; categories: any[]; tagGroups: KnowledgeTagGroup[] }) {
   const authorName = (tip as any).worker?.profile?.full_name ?? '—'
   const categoryLabel = tip.knowledge_category?.name ?? tip.category
   const categoryColor = KNOWLEDGE_COLOR_CLASSES[tip.knowledge_category?.color ?? ''] ?? 'bg-gray-100 text-gray-600'
@@ -85,7 +85,7 @@ function TipRow({ tip, categories }: { tip: KnowledgeTip; categories: any[] }) {
           </div>
         </div>
         {/* 動作按鈕 */}
-        <AdminKnowledgeActions tip={tip} categories={categories} />
+        <AdminKnowledgeActions tip={tip} categories={categories} tagGroups={tagGroups} />
       </div>
       {/* 留言列表 */}
       {comments.length > 0 && (
@@ -102,7 +102,7 @@ function TipRow({ tip, categories }: { tip: KnowledgeTip; categories: any[] }) {
 export default async function AdminKnowledgePage() {
   const supabase = await createClient()
 
-  const [{ data: tips }, { data: knowledgeCategories }] = await Promise.all([
+  const [{ data: tips }, { data: knowledgeCategories }, { data: rawTagGroups }] = await Promise.all([
     supabase
       .from('knowledge_tips')
       .select(`
@@ -120,7 +120,18 @@ export default async function AdminKnowledgePage() {
       .from('knowledge_categories')
       .select('id, name, color, points, sort_order')
       .order('sort_order'),
+    supabase
+      .from('knowledge_tag_groups')
+      .select('id, label, sort_order, knowledge_tags(id, label, sort_order)')
+      .order('sort_order'),
   ])
+
+  const tagGroups: KnowledgeTagGroup[] = (rawTagGroups ?? []).map(g => ({
+    id: g.id,
+    label: g.label,
+    sort_order: g.sort_order,
+    tags: ((g as any).knowledge_tags ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order),
+  }))
 
   const allTips = (tips ?? []) as KnowledgeTip[]
   const pending  = allTips.filter(t => t.status === 'pending')
@@ -155,7 +166,7 @@ export default async function AdminKnowledgePage() {
           <CardContent className="p-0">
             <div className="divide-y divide-yellow-50">
               {pending.map(tip => (
-                <TipRow key={tip.id} tip={tip} categories={knowledgeCategories ?? []} />
+                <TipRow key={tip.id} tip={tip} categories={knowledgeCategories ?? []} tagGroups={tagGroups} />
               ))}
             </div>
           </CardContent>
@@ -175,7 +186,7 @@ export default async function AdminKnowledgePage() {
           ) : (
             <div className="divide-y divide-gray-50">
               {rest.map(tip => (
-                <TipRow key={tip.id} tip={tip} categories={knowledgeCategories ?? []} />
+                <TipRow key={tip.id} tip={tip} categories={knowledgeCategories ?? []} tagGroups={tagGroups} />
               ))}
             </div>
           )}
