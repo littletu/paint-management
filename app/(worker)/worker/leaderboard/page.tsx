@@ -21,9 +21,27 @@ const RANK_BG = [
 export default async function LeaderboardPage() {
   const user = await getAuthUser()
   if (!user) return null
-  const currentWorkerId = await getWorkerIdByProfileId(user.id)
 
   const supabase = await createClient()
+
+  // Check access permission (same gate as worker-issues)
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('allowed_sections')
+    .eq('id', user.id)
+    .single()
+  const allowedSections: string[] | null = profile?.allowed_sections ?? null
+  const hasAccess = allowedSections === null || allowedSections.includes('worker-issues')
+  if (!hasAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-gray-400 text-center">
+        <Trophy className="w-10 h-10 mb-3 opacity-20" />
+        <p className="text-sm font-medium text-gray-500">沒有存取權限</p>
+      </div>
+    )
+  }
+
+  const currentWorkerId = await getWorkerIdByProfileId(user.id)
 
   const [{ data: workers }, { data: approvedTips }, { data: allComments }] = await Promise.all([
     supabase

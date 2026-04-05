@@ -21,6 +21,10 @@ export const ALL_SECTIONS = [
   { key: 'system',       label: '系統管理' },
 ]
 
+export const WORKER_SECTIONS = [
+  { key: 'worker-issues', label: '妙根老塞' },
+]
+
 interface Profile {
   id: string
   full_name: string | null
@@ -48,7 +52,7 @@ function UserRow({ profile, currentUserId }: { profile: Profile; currentUserId: 
   function toggle(key: string) {
     if (isFullAccess) {
       // Switch from full → restricted (all except this one)
-      setSections(ALL_SECTIONS.map(s => s.key).filter(k => k !== key))
+      setSections(allKeys.filter(k => k !== key))
     } else {
       setSections(prev =>
         prev!.includes(key) ? prev!.filter(k => k !== key) : [...prev!, key]
@@ -57,7 +61,7 @@ function UserRow({ profile, currentUserId }: { profile: Profile; currentUserId: 
   }
 
   function setFullAccess(full: boolean) {
-    setSections(full ? null : ALL_SECTIONS.map(s => s.key))
+    setSections(full ? null : allKeys)
   }
 
   async function handleSave() {
@@ -73,7 +77,8 @@ function UserRow({ profile, currentUserId }: { profile: Profile; currentUserId: 
     setOpen(false)
   }
 
-  const enabledCount = isFullAccess ? ALL_SECTIONS.length : (sections?.length ?? 0)
+  const allKeys = [...ALL_SECTIONS, ...WORKER_SECTIONS].map(s => s.key)
+  const enabledCount = isFullAccess ? allKeys.length : (sections?.length ?? 0)
 
   return (
     <div className="border border-gray-200 rounded-xl overflow-hidden">
@@ -143,28 +148,58 @@ function UserRow({ profile, currentUserId }: { profile: Profile; currentUserId: 
             </button>
           </div>
 
-          {/* Section checkboxes */}
-          <div className="grid grid-cols-2 gap-1.5">
-            {ALL_SECTIONS.map(section => {
-              const enabled = isFullAccess || (sections?.includes(section.key) ?? false)
-              return (
-                <button
-                  key={section.key}
-                  onClick={() => toggle(section.key)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-left ${
-                    enabled
-                      ? 'bg-orange-50 text-orange-700 border border-orange-200'
-                      : 'bg-white text-gray-400 border border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  {enabled
-                    ? <Shield className="w-3.5 h-3.5 shrink-0" />
-                    : <ShieldOff className="w-3.5 h-3.5 shrink-0" />
-                  }
-                  {section.label}
-                </button>
-              )
-            })}
+          {/* Admin section checkboxes */}
+          <div>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">管理後台</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {ALL_SECTIONS.map(section => {
+                const enabled = isFullAccess || (sections?.includes(section.key) ?? false)
+                return (
+                  <button
+                    key={section.key}
+                    onClick={() => toggle(section.key)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                      enabled
+                        ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                        : 'bg-white text-gray-400 border border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    {enabled
+                      ? <Shield className="w-3.5 h-3.5 shrink-0" />
+                      : <ShieldOff className="w-3.5 h-3.5 shrink-0" />
+                    }
+                    {section.label}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Worker section checkboxes */}
+          <div>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">師傅端功能</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {WORKER_SECTIONS.map(section => {
+                const enabled = isFullAccess || (sections?.includes(section.key) ?? false)
+                return (
+                  <button
+                    key={section.key}
+                    onClick={() => toggle(section.key)}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors text-left ${
+                      enabled
+                        ? 'bg-orange-50 text-orange-700 border border-orange-200'
+                        : 'bg-white text-gray-400 border border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    {enabled
+                      ? <Shield className="w-3.5 h-3.5 shrink-0" />
+                      : <ShieldOff className="w-3.5 h-3.5 shrink-0" />
+                    }
+                    {section.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           <div className="flex gap-2 pt-1">

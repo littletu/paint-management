@@ -10,8 +10,28 @@ export default async function WorkerKnowledgePage() {
   const user = await getAuthUser()
   if (!user) return null
 
-  const workerId = await getWorkerIdByProfileId(user.id)
   const supabase = await createClient()
+
+  // Check access permission
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('allowed_sections')
+    .eq('id', user.id)
+    .single()
+
+  const allowedSections: string[] | null = profile?.allowed_sections ?? null
+  const hasAccess = allowedSections === null || allowedSections.includes('worker-issues')
+  if (!hasAccess) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-gray-400 text-center">
+        <Lightbulb className="w-10 h-10 mb-3 opacity-20" />
+        <p className="text-sm font-medium text-gray-500">沒有存取權限</p>
+        <p className="text-xs mt-1">請聯絡管理員開通妙根老塞功能</p>
+      </div>
+    )
+  }
+
+  const workerId = await getWorkerIdByProfileId(user.id)
 
   const [{ data: tips }, { data: projects }, { data: knowledgeCategories }, { data: rawTagGroups }] = await Promise.all([
     supabase

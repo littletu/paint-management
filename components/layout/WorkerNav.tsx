@@ -6,19 +6,29 @@ import { ClipboardList, Wallet, UserCircle, ReceiptText, Lightbulb } from 'lucid
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { href: '/worker/work-log', label: '填工時',  icon: ClipboardList },
-  { href: '/worker/payroll',  label: '薪資',    icon: Wallet },
-  { href: '/worker/receipts', label: '發票',    icon: ReceiptText },
-  { href: '/worker/issues',   label: '妙根老塞', icon: Lightbulb },
-  { href: '/worker/profile',  label: '個人資料', icon: UserCircle },
+  { href: '/worker/work-log', label: '填工時',   icon: ClipboardList, section: null },
+  { href: '/worker/payroll',  label: '薪資',     icon: Wallet,        section: null },
+  { href: '/worker/receipts', label: '發票',     icon: ReceiptText,   section: null },
+  { href: '/worker/issues',   label: '妙根老塞', icon: Lightbulb,     section: 'worker-issues' },
+  { href: '/worker/profile',  label: '個人資料', icon: UserCircle,    section: null },
 ]
 
-export function WorkerNav() {
+interface Props {
+  allowedSections: string[] | null  // null = full access
+}
+
+export function WorkerNav({ allowedSections }: Props) {
   const pathname = usePathname()
+
+  const visibleItems = navItems.filter(item =>
+    item.section === null ||
+    allowedSections === null ||
+    allowedSections.includes(item.section)
+  )
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-10">
-      {navItems.map(({ href, label, icon: Icon }) => (
+      {visibleItems.map(({ href, label, icon: Icon }) => (
         <Link
           key={href}
           href={href}

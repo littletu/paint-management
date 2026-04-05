@@ -12,7 +12,7 @@ export default async function WorkerLayout({ children }: { children: React.React
   const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role, full_name')
+    .select('role, full_name, allowed_sections')
     .eq('id', user.id)
     .single()
 
@@ -27,7 +27,7 @@ export default async function WorkerLayout({ children }: { children: React.React
         {children}
       </main>
 
-      <WorkerNav />
+      <WorkerNav allowedSections={profile?.allowed_sections ?? null} />
     </div>
   )
 }
