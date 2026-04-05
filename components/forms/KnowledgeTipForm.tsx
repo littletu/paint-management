@@ -66,8 +66,9 @@ export function KnowledgeTipForm({ workerId, projects }: Props) {
     let image_url: string | null = null
     if (imageFile) {
       const compressed = await compressImage(imageFile)
+      const { data: { user } } = await supabase.auth.getUser()
       const ext = compressed.name.split('.').pop()
-      const path = `knowledge/${workerId}/${Date.now()}.${ext}`
+      const path = `knowledge/${user!.id}/${Date.now()}.${ext}`
       const { error: uploadError } = await supabase.storage
         .from('receipts')
         .upload(path, compressed, { upsert: false })
