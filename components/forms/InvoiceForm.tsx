@@ -24,10 +24,24 @@ interface ProjectOption {
   customer_id: string | null
 }
 
+interface ExistingItem {
+  description: string
+  quantity: number
+  unit_price: number
+}
+
 interface Props {
   customers: CustomerOption[]
   projects: ProjectOption[]
   defaultProjectId?: string
+  // Edit mode
+  editInvoiceId?: string
+  defaultCustomerId?: string
+  defaultIssueDate?: string
+  defaultDueDate?: string
+  defaultTaxRate?: string
+  defaultNotes?: string
+  defaultItems?: ExistingItem[]
 }
 
 interface LineItem {
@@ -43,17 +57,27 @@ function emptyItem(): LineItem {
   return { description: '', quantity: '1', unit_price: '' }
 }
 
-export function InvoiceForm({ customers, projects, defaultProjectId }: Props) {
+export function InvoiceForm({
+  customers, projects, defaultProjectId,
+  editInvoiceId, defaultCustomerId,
+  defaultIssueDate, defaultDueDate,
+  defaultTaxRate, defaultNotes, defaultItems,
+}: Props) {
   const router = useRouter()
+  const isEdit = !!editInvoiceId
 
   const defaultProject = defaultProjectId ? projects.find(p => p.id === defaultProjectId) : null
-  const [customerId, setCustomerId] = useState(defaultProject?.customer_id ?? '')
+  const [customerId, setCustomerId] = useState(defaultCustomerId ?? defaultProject?.customer_id ?? '')
   const [projectId, setProjectId] = useState(defaultProjectId ?? '')
-  const [issueDate, setIssueDate] = useState(todayString())
-  const [dueDate, setDueDate] = useState('')
-  const [taxRate, setTaxRate] = useState('0')
-  const [notes, setNotes] = useState('')
-  const [items, setItems] = useState<LineItem[]>([emptyItem()])
+  const [issueDate, setIssueDate] = useState(defaultIssueDate ?? todayString())
+  const [dueDate, setDueDate] = useState(defaultDueDate ?? '')
+  const [taxRate, setTaxRate] = useState(defaultTaxRate ?? '0')
+  const [notes, setNotes] = useState(defaultNotes ?? '')
+  const [items, setItems] = useState<LineItem[]>(
+    defaultItems?.length
+      ? defaultItems.map(it => ({ description: it.description, quantity: String(it.quantity), unit_price: String(it.unit_price) }))
+      : [emptyItem()]
+  )
   const [loading, setLoading] = useState(false)
 
   // Filter projects by selected customer
@@ -111,22 +135,28 @@ export function InvoiceForm({ customers, projects, defaultProjectId }: Props) {
         })),
       }
 
-      const res = await fetch('/api/invoices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        toast.error(data.error ?? '新增失敗')
-        setLoading(false)
-        return
+      if (isEdit) {
+        const res = await fetch(`/api/invoices/${editInvoiceId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const data = await res.json()
+        if (!res.ok) { toast.error(data.error ?? '更新失敗'); setLoading(false); return }
+        toast.success('請款單已更新')
+        router.push('/invoices/' + editInvoiceId)
+        router.refresh()
+      } else {
+        const res = await fetch('/api/invoices', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        const data = await res.json()
+        if (!res.ok) { toast.error(data.error ?? '新增失敗'); setLoading(false); return }
+        toast.success(`請款單 ${data.invoice_number} 已建立`)
+        router.push('/invoices/' + data.id)
       }
-
-      toast.success(`請款單 ${data.invoice_number} 已建立`)
-      router.push('/invoices/' + data.id)
     } catch {
       toast.error('網路錯誤，請稍後再試')
       setLoading(false)
@@ -316,7 +346,7 @@ export function InvoiceForm({ customers, projects, defaultProjectId }: Props) {
       </Card>
 
       <Button type="submit" className="w-full" size="lg" disabled={loading}>
-        {loading ? '建立中...' : '建立請款單'}
+        {loading ? (isEdit ? '更新中...' : '建立中...') : (isEdit ? '儲存變更' : '建立請款單')}
       </Button>
     </form>
   )

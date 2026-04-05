@@ -8,6 +8,7 @@ import { InvoicePrintButton } from '@/components/invoice/InvoicePrintButton'
 import { InvoiceStatusActions } from '@/components/invoice/InvoiceStatusActions'
 import { InvoicePayments } from '@/components/invoice/InvoicePayments'
 import { InvoiceDeleteButton } from '@/components/invoice/InvoiceDeleteButton'
+import { Pencil } from 'lucide-react'
 
 const statusLabel: Record<string, string> = {
   draft: '草稿',
@@ -69,6 +70,15 @@ export default async function InvoiceDetailPage({ params }: { params: Promise<{ 
         </div>
         <div className="flex items-center gap-2">
           <InvoiceDeleteButton invoiceId={id} invoiceNumber={invoice.invoice_number} status={invoice.status} />
+          {invoice.status !== 'paid' && invoice.status !== 'cancelled' && (
+            <Link
+              href={`/invoices/${id}/edit`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              編輯
+            </Link>
+          )}
           <InvoiceStatusActions invoiceId={id} status={invoice.status} />
           <InvoicePrintButton />
         </div>
