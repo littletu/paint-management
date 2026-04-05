@@ -1,15 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/cached-auth'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { WorkerHeader } from '@/components/layout/WorkerHeader'
 import { WorkerNav } from '@/components/layout/WorkerNav'
 
 export default async function WorkerLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
+  // React cache() deduplicates this call — pages calling getAuthUser() share the same result
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
+  const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
     .select('role, full_name')

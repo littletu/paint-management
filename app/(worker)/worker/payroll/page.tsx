@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/cached-auth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
@@ -13,13 +14,14 @@ const statusVariant: Record<string, 'default' | 'secondary' | 'outline'> = {
 }
 
 export default async function WorkerPayrollPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const user = await getAuthUser()
+  if (!user) return null
 
+  const supabase = await createClient()
   const { data: worker } = await supabase
     .from('workers')
     .select('id, daily_rate, overtime_rate')
-    .eq('profile_id', user!.id)
+    .eq('profile_id', user.id)
     .single()
 
   if (!worker) return <div className="text-center py-12 text-gray-500">找不到師傅資料</div>

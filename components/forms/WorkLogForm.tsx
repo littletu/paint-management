@@ -150,8 +150,20 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
       const { error } = await supabase.from('time_entries').update(payload).eq('id', editingId)
       if (error) { toast.error('更新失敗：' + error.message); setLoading(false); return }
       toast.success('工時已更新')
+      // Optimistic update: patch the local entry immediately
+      const projectName = projects.find(p => p.id === form.project_id)?.name
+        ?? editingProject?.name ?? ''
+      setDateEntries(prev => prev.map(e =>
+        e.id === editingId
+          ? { ...e, ...payload, project: { name: projectName } }
+          : e
+      ))
     } else {
-      const { error } = await supabase.from('time_entries').insert(payload)
+      const { data: inserted, error } = await supabase
+        .from('time_entries')
+        .insert(payload)
+        .select('*, project:projects(name)')
+        .single()
       if (error) {
         if (error.code === '23505') { toast.error('此工程今日已有記錄，請點擊下方記錄進行編輯') }
         else { toast.error('送出失敗：' + error.message) }
@@ -159,13 +171,18 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
         return
       }
       toast.success('工時已送出')
+      // Optimistic update: add new entry to local state immediately
+      if (inserted) {
+        setDateEntries(prev => [...prev, inserted])
+        setWeekEntryDates(prev => new Set([...prev, selectedDate]))
+      }
     }
 
     setForm(emptyForm)
     setEditingId(null)
     setEditingProject(null)
     setLoading(false)
-    fetchWeekEntries(weekStart)
+    // Refresh server state in background (no await — don't block UI)
     router.refresh()
   }
 
@@ -326,7 +343,16 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
                       const { error } = await supabase.from('time_entries').delete().eq('id', entry.id)
                       if (error) { toast.error('刪除失敗：' + error.message); return }
                       toast.success('已刪除')
-                      fetchWeekEntries(weekStart)
+                      // Optimistic update: remove from local state immediately
+                      const remaining = dateEntries.filter(e => e.id !== entry.id)
+                      setDateEntries(remaining)
+                      if (remaining.length === 0) {
+                        setWeekEntryDates(prev => {
+                          const next = new Set(prev)
+                          next.delete(selectedDate)
+                          return next
+                        })
+                      }
                       router.refresh()
                     }}
                     className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-300 transition-colors"
