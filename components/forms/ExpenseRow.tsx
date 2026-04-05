@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { Pencil, Trash2, Check, X, ExternalLink, Upload, FileText } from 'lucide-react'
+import { compressImage } from '@/lib/utils/compress-image'
 
 interface Expense {
   id: string
@@ -68,14 +69,15 @@ export function ExpenseRow({ expense, categories, showProject }: Props) {
     let receipt_name = expense.receipt_name
 
     if (file) {
+      const compressed = await compressImage(file)
       const { data: { user } } = await supabase.auth.getUser()
-      const ext = file.name.split('.').pop()
+      const ext = compressed.name.split('.').pop()
       const path = `expenses/${user!.id}/${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage.from('receipts').upload(path, file, { upsert: false })
+      const { error: uploadError } = await supabase.storage.from('receipts').upload(path, compressed, { upsert: false })
       if (uploadError) { toast.error('上傳失敗：' + uploadError.message); setSaving(false); return }
       const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(path)
       receipt_url = urlData.publicUrl
-      receipt_name = file.name
+      receipt_name = compressed.name
     }
 
     const { error } = await supabase.from('expenses').update({

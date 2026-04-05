@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { Camera } from 'lucide-react'
 import Image from 'next/image'
+import { compressImage } from '@/lib/utils/compress-image'
 
 interface Props {
   fullName: string
@@ -57,16 +58,16 @@ export function WorkerProfileForm({
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) { toast.error('圖片大小不能超過 5MB'); return }
 
     setUploadingAvatar(true)
+    const compressed = await compressImage(file, 800)
     const { data: { user } } = await supabase.auth.getUser()
-    const ext = file.name.split('.').pop()
+    const ext = compressed.name.split('.').pop()
     const path = `${user!.id}/avatar.${ext}`
 
     const { error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(path, file, { upsert: true })
+      .upload(path, compressed, { upsert: true })
 
     if (uploadError) {
       toast.error('上傳失敗：' + uploadError.message)

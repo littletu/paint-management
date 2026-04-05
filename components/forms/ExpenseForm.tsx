@@ -11,6 +11,7 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { todayString } from '@/lib/utils/date'
 import { Plus, Upload, X, FileText } from 'lucide-react'
+import { compressImage } from '@/lib/utils/compress-image'
 
 interface Props {
   projects: Array<{ id: string; name: string }>
@@ -70,11 +71,12 @@ export function ExpenseForm({ projects, categories, companyCategories, defaultPr
     let receipt_name: string | null = null
 
     if (file) {
-      const ext = file.name.split('.').pop()
+      const compressed = await compressImage(file)
+      const ext = compressed.name.split('.').pop()
       const path = `expenses/${user!.id}/${Date.now()}.${ext}`
       const { error: uploadError } = await supabase.storage
         .from('receipts')
-        .upload(path, file, { upsert: false })
+        .upload(path, compressed, { upsert: false })
       if (uploadError) {
         toast.error('發票上傳失敗：' + uploadError.message)
         setLoading(false)
@@ -82,7 +84,7 @@ export function ExpenseForm({ projects, categories, companyCategories, defaultPr
       }
       const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(path)
       receipt_url = urlData.publicUrl
-      receipt_name = file.name
+      receipt_name = compressed.name
     }
 
     const { error } = await supabase.from('expenses').insert({
