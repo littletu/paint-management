@@ -44,10 +44,12 @@ export function KnowledgeCategoryManager({ categories: init }: Props) {
   const [categories, setCategories] = useState(init)
   const [newName, setNewName] = useState('')
   const [newColor, setNewColor] = useState('gray')
+  const [newPoints, setNewPoints] = useState('10')
   const [adding, setAdding] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editColor, setEditColor] = useState('gray')
+  const [editPoints, setEditPoints] = useState('10')
 
   // Drag-to-reorder
   const dragIndex = useRef<number | null>(null)
@@ -83,15 +85,17 @@ export function KnowledgeCategoryManager({ categories: init }: Props) {
   async function handleAdd() {
     if (!newName.trim()) return
     const maxOrder = categories.reduce((m, c) => Math.max(m, c.sort_order), 0)
+    const pts = parseInt(newPoints) || 10
     const { data, error } = await supabase
       .from('knowledge_categories')
-      .insert({ name: newName.trim(), color: newColor, sort_order: maxOrder + 1 })
+      .insert({ name: newName.trim(), color: newColor, points: pts, sort_order: maxOrder + 1 })
       .select()
       .single()
     if (error) { toast.error('新增失敗：' + error.message); return }
     setCategories(prev => [...prev, data as KnowledgeDBCategory])
     setNewName('')
     setNewColor('gray')
+    setNewPoints('10')
     setAdding(false)
     toast.success('已新增')
     router.refresh()
@@ -108,12 +112,13 @@ export function KnowledgeCategoryManager({ categories: init }: Props) {
 
   async function handleEdit(id: string) {
     if (!editName.trim()) return
+    const pts = parseInt(editPoints) || 10
     const { error } = await supabase
       .from('knowledge_categories')
-      .update({ name: editName.trim(), color: editColor })
+      .update({ name: editName.trim(), color: editColor, points: pts })
       .eq('id', id)
     if (error) { toast.error('更新失敗：' + error.message); return }
-    setCategories(prev => prev.map(c => c.id === id ? { ...c, name: editName.trim(), color: editColor } : c))
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, name: editName.trim(), color: editColor, points: pts } : c))
     setEditingId(null)
     toast.success('已更新')
     router.refresh()
@@ -161,6 +166,16 @@ export function KnowledgeCategoryManager({ categories: init }: Props) {
                   autoFocus
                 />
                 <ColorPicker value={editColor} onChange={setEditColor} />
+                <div className="flex items-center gap-2">
+                  <label className="text-xs text-gray-500 shrink-0">積分</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={editPoints}
+                    onChange={e => setEditPoints(e.target.value)}
+                    className="h-7 text-sm w-20"
+                  />
+                </div>
                 <div className="flex gap-1.5">
                   <button onClick={() => handleEdit(cat.id)} className="text-green-500 hover:text-green-700 p-1">
                     <Check className="w-4 h-4" />
@@ -177,9 +192,10 @@ export function KnowledgeCategoryManager({ categories: init }: Props) {
                 >
                   {cat.name}
                 </span>
+                <span className="text-xs text-gray-400 shrink-0">+{cat.points}分</span>
                 <span className="flex-1" />
                 <button
-                  onClick={() => { setEditingId(cat.id); setEditName(cat.name); setEditColor(cat.color) }}
+                  onClick={() => { setEditingId(cat.id); setEditName(cat.name); setEditColor(cat.color); setEditPoints(String(cat.points)) }}
                   className="text-gray-300 hover:text-gray-600 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <Pencil className="w-3.5 h-3.5" />
@@ -209,9 +225,19 @@ export function KnowledgeCategoryManager({ categories: init }: Props) {
               <p className="text-xs text-gray-500 mb-1.5">選擇顏色</p>
               <ColorPicker value={newColor} onChange={setNewColor} />
             </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-500 shrink-0">積分</label>
+              <Input
+                type="number"
+                min="0"
+                value={newPoints}
+                onChange={e => setNewPoints(e.target.value)}
+                className="h-8 text-sm w-24 bg-white"
+              />
+            </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={handleAdd} className="h-8 shrink-0">新增</Button>
-              <Button size="sm" variant="outline" onClick={() => { setAdding(false); setNewName(''); setNewColor('gray') }} className="h-8 shrink-0">取消</Button>
+              <Button size="sm" variant="outline" onClick={() => { setAdding(false); setNewName(''); setNewColor('gray'); setNewPoints('10') }} className="h-8 shrink-0">取消</Button>
             </div>
           </div>
         ) : (

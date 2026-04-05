@@ -34,8 +34,11 @@ export interface KnowledgeDBCategory {
   id: string
   name: string
   color: string
+  points: number
   sort_order: number
 }
+
+export const COMMENT_POINTS = 2   // fixed points per knowledge comment
 
 /** Maps color key (stored in DB) → Tailwind badge classes */
 export const KNOWLEDGE_COLOR_CLASSES: Record<string, string> = {
@@ -161,6 +164,7 @@ export interface KnowledgeTip {
   /** Legacy slug value (technique / material / …). Use knowledge_category for display. */
   category: string
   category_id: string | null
+  status: 'pending' | 'approved' | 'rejected'
   knowledge_category?: KnowledgeDBCategory | null
   image_url: string | null
   created_at: string

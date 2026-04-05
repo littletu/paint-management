@@ -13,6 +13,11 @@ import { cn } from '@/lib/utils'
 import type { KnowledgeTip, KnowledgeComment } from '@/types'
 import { KNOWLEDGE_COLOR_CLASSES } from '@/types'
 
+const TIP_STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  pending:  { label: '⏳ 待審核', cls: 'bg-yellow-100 text-yellow-700' },
+  rejected: { label: '❌ 已駁回', cls: 'bg-red-100 text-red-700' },
+}
+
 function formatDate(s: string) {
   return new Date(s).toLocaleDateString('zh-TW', {
     month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -64,6 +69,7 @@ export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
       title: editForm.title.trim(),
       content: editForm.content.trim(),
       reason: editForm.reason.trim() || null,
+      status: 'pending',   // reset to pending for re-review after edit
     }).eq('id', tip.id)
     setSaving(false)
     if (error) { toast.error('更新失敗：' + error.message); return }
@@ -112,6 +118,11 @@ export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
             <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', categoryColor)}>
               {categoryLabel}
             </span>
+            {isOwner && TIP_STATUS_BADGE[tip.status] && (
+              <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', TIP_STATUS_BADGE[tip.status].cls)}>
+                {TIP_STATUS_BADGE[tip.status].label}
+              </span>
+            )}
             {tip.project && (
               <span className="flex items-center gap-0.5 text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
                 <MapPin className="w-2.5 h-2.5" />

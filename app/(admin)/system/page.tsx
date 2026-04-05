@@ -12,7 +12,7 @@ export default async function SystemPage() {
   const [{ data: allCategories }, { data: profiles }, { data: knowledgeCategories }] = await Promise.all([
     supabase.from('expense_categories').select('id, name, sort_order, scope').order('sort_order'),
     supabase.from('profiles').select('id, full_name, role, allowed_sections').order('full_name'),
-    supabase.from('knowledge_categories').select('id, name, color, sort_order').order('sort_order'),
+    supabase.from('knowledge_categories').select('id, name, color, points, sort_order').order('sort_order'),
   ])
 
   const expenseCategories = (allCategories ?? []).filter(c => c.scope === 'project')

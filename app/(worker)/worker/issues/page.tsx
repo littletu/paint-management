@@ -2,7 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { getAuthUser, getWorkerIdByProfileId } from '@/lib/supabase/cached-auth'
 import { KnowledgeTipForm } from '@/components/forms/KnowledgeTipForm'
 import { KnowledgeTipCard } from '@/components/knowledge/KnowledgeTipCard'
-import { Lightbulb } from 'lucide-react'
+import { Lightbulb, Trophy } from 'lucide-react'
+import Link from 'next/link'
 import type { KnowledgeTip } from '@/types'
 
 export default async function WorkerKnowledgePage() {
@@ -12,7 +13,6 @@ export default async function WorkerKnowledgePage() {
   const workerId = await getWorkerIdByProfileId(user.id)
   const supabase = await createClient()
 
-  // 並行取得：所有師傅的知識條目（含留言）、所有進行中工程、分類
   const [{ data: tips }, { data: projects }, { data: knowledgeCategories }] = await Promise.all([
     supabase
       .from('knowledge_tips')
@@ -26,6 +26,8 @@ export default async function WorkerKnowledgePage() {
           worker:workers(profile:profiles(full_name))
         )
       `)
+      // Show approved tips OR own tips (any status)
+      .or(workerId ? `status.eq.approved,worker_id.eq.${workerId}` : 'status.eq.approved')
       .order('created_at', { ascending: false }),
     supabase
       .from('projects')
@@ -34,21 +36,30 @@ export default async function WorkerKnowledgePage() {
       .order('name'),
     supabase
       .from('knowledge_categories')
-      .select('id, name, color, sort_order')
+      .select('id, name, color, points, sort_order')
       .order('sort_order'),
   ])
 
   return (
     <div>
       {/* Header */}
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-          <Lightbulb className="w-5 h-5 text-orange-500" />
-          妙根老塞
-        </h1>
-        <p className="text-xs text-gray-500 mt-0.5">
-          集結師傅智慧，一起傳承施工好手藝
-        </p>
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <Lightbulb className="w-5 h-5 text-orange-500" />
+            妙根老塞
+          </h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            集結師傅智慧，一起傳承施工好手藝
+          </p>
+        </div>
+        <Link
+          href="/worker/leaderboard"
+          className="flex items-center gap-1.5 text-xs text-orange-600 font-medium bg-orange-50 hover:bg-orange-100 px-3 py-1.5 rounded-full transition-colors"
+        >
+          <Trophy className="w-3.5 h-3.5" />
+          排行榜
+        </Link>
       </div>
 
       {/* 新增老塞表單（可收合） */}

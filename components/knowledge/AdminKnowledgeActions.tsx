@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
-import { Trash2, Pencil, X, Check } from 'lucide-react'
+import { Trash2, Pencil, X, Check, ThumbsUp, ThumbsDown, RotateCcw } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,7 @@ interface Tip {
   reason: string | null
   category: string
   category_id: string | null
+  status: string
 }
 
 interface Props {
@@ -30,6 +31,7 @@ export function AdminKnowledgeActions({ tip, categories }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [currentStatus, setCurrentStatus] = useState(tip.status)
   const [form, setForm] = useState({
     title: tip.title,
     content: tip.content,
@@ -55,6 +57,17 @@ export function AdminKnowledgeActions({ tip, categories }: Props) {
     if (error) { toast.error('更新失敗：' + error.message); return }
     toast.success('已更新')
     setEditing(false)
+    router.refresh()
+  }
+
+  async function handleSetStatus(newStatus: 'approved' | 'rejected' | 'pending') {
+    setLoading(true)
+    const { error } = await supabase.from('knowledge_tips').update({ status: newStatus }).eq('id', tip.id)
+    setLoading(false)
+    if (error) { toast.error('更新失敗：' + error.message); return }
+    setCurrentStatus(newStatus)
+    const labels = { approved: '已審核通過', rejected: '已駁回', pending: '已重設為待審核' }
+    toast.success(labels[newStatus])
     router.refresh()
   }
 
@@ -125,7 +138,37 @@ export function AdminKnowledgeActions({ tip, categories }: Props) {
   }
 
   return (
-    <div className="flex gap-1 shrink-0">
+    <div className="flex gap-1 shrink-0 flex-wrap justify-end">
+      {currentStatus === 'pending' && (
+        <>
+          <button
+            onClick={() => handleSetStatus('approved')}
+            disabled={loading}
+            className="p-2 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors disabled:opacity-40"
+            title="審核通過"
+          >
+            <ThumbsUp className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => handleSetStatus('rejected')}
+            disabled={loading}
+            className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
+            title="駁回"
+          >
+            <ThumbsDown className="w-4 h-4" />
+          </button>
+        </>
+      )}
+      {(currentStatus === 'approved' || currentStatus === 'rejected') && (
+        <button
+          onClick={() => handleSetStatus('pending')}
+          disabled={loading}
+          className="p-2 rounded-lg text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-colors disabled:opacity-40"
+          title="重設為待審核"
+        >
+          <RotateCcw className="w-3.5 h-3.5" />
+        </button>
+      )}
       <button
         onClick={() => setEditing(true)}
         className="p-2 rounded-lg text-gray-400 hover:text-blue-500 hover:bg-blue-50 transition-colors"
