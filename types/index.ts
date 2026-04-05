@@ -1,5 +1,6 @@
 export type UserRole = 'admin' | 'worker'
 
+/** @deprecated Use KnowledgeDBCategory from DB instead */
 export type KnowledgeCategory =
   | 'technique'
   | 'material'
@@ -8,6 +9,7 @@ export type KnowledgeCategory =
   | 'safety'
   | 'general'
 
+/** @deprecated Use KNOWLEDGE_COLOR_CLASSES with KnowledgeDBCategory instead */
 export const KNOWLEDGE_CATEGORY_LABELS: Record<KnowledgeCategory, string> = {
   technique:    '施工技巧',
   material:     '材料知識',
@@ -17,6 +19,7 @@ export const KNOWLEDGE_CATEGORY_LABELS: Record<KnowledgeCategory, string> = {
   general:      '一般分享',
 }
 
+/** @deprecated Use KNOWLEDGE_COLOR_CLASSES with KnowledgeDBCategory instead */
 export const KNOWLEDGE_CATEGORY_COLORS: Record<KnowledgeCategory, string> = {
   technique:    'bg-orange-100 text-orange-700',
   material:     'bg-blue-100 text-blue-700',
@@ -24,6 +27,38 @@ export const KNOWLEDGE_CATEGORY_COLORS: Record<KnowledgeCategory, string> = {
   troubleshoot: 'bg-red-100 text-red-700',
   safety:       'bg-yellow-100 text-yellow-700',
   general:      'bg-gray-100 text-gray-600',
+}
+
+/** DB-backed category from knowledge_categories table */
+export interface KnowledgeDBCategory {
+  id: string
+  name: string
+  color: string
+  sort_order: number
+}
+
+/** Maps color key (stored in DB) → Tailwind badge classes */
+export const KNOWLEDGE_COLOR_CLASSES: Record<string, string> = {
+  orange: 'bg-orange-100 text-orange-700',
+  blue:   'bg-blue-100 text-blue-700',
+  green:  'bg-green-100 text-green-700',
+  red:    'bg-red-100 text-red-700',
+  yellow: 'bg-yellow-100 text-yellow-700',
+  gray:   'bg-gray-100 text-gray-600',
+  purple: 'bg-purple-100 text-purple-700',
+  pink:   'bg-pink-100 text-pink-700',
+}
+
+/** Dot preview color (for color picker UI) — uses inline style */
+export const KNOWLEDGE_COLOR_HEX: Record<string, string> = {
+  orange: '#f97316',
+  blue:   '#3b82f6',
+  green:  '#22c55e',
+  red:    '#ef4444',
+  yellow: '#eab308',
+  gray:   '#6b7280',
+  purple: '#a855f7',
+  pink:   '#ec4899',
 }
 
 export type ProjectStatus = 'pending' | 'active' | 'completed' | 'cancelled'
@@ -123,7 +158,10 @@ export interface KnowledgeTip {
   title: string
   content: string
   reason: string | null
-  category: KnowledgeCategory
+  /** Legacy slug value (technique / material / …). Use knowledge_category for display. */
+  category: string
+  category_id: string | null
+  knowledge_category?: KnowledgeDBCategory | null
   image_url: string | null
   created_at: string
   worker?: { profile?: { full_name: string } }

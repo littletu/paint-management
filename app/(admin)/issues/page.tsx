@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lightbulb, MessageCircle, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { KnowledgeTip } from '@/types'
-import { KNOWLEDGE_CATEGORY_LABELS, KNOWLEDGE_CATEGORY_COLORS } from '@/types'
+import { KNOWLEDGE_COLOR_CLASSES } from '@/types'
 import { AdminKnowledgeActions } from '@/components/knowledge/AdminKnowledgeActions'
 import { AdminCommentRow } from '@/components/knowledge/AdminCommentRow'
 
@@ -17,18 +17,25 @@ function formatDate(s: string) {
 export default async function AdminKnowledgePage() {
   const supabase = await createClient()
 
-  const { data: tips } = await supabase
-    .from('knowledge_tips')
-    .select(`
-      *,
-      worker:workers(profile:profiles(full_name)),
-      project:projects(name),
-      knowledge_comments(
-        id, content, created_at,
-        worker:workers(profile:profiles(full_name))
-      )
-    `)
-    .order('created_at', { ascending: false })
+  const [{ data: tips }, { data: knowledgeCategories }] = await Promise.all([
+    supabase
+      .from('knowledge_tips')
+      .select(`
+        *,
+        worker:workers(profile:profiles(full_name)),
+        project:projects(name),
+        knowledge_category:knowledge_categories(id, name, color),
+        knowledge_comments(
+          id, content, created_at,
+          worker:workers(profile:profiles(full_name))
+        )
+      `)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('knowledge_categories')
+      .select('id, name, color, sort_order')
+      .order('sort_order'),
+  ])
 
   const total = tips?.length ?? 0
   const commentTotal = tips?.reduce((acc: number, t: any) => acc + (t.knowledge_comments?.length ?? 0), 0) ?? 0
@@ -60,8 +67,8 @@ export default async function AdminKnowledgePage() {
             <div className="divide-y divide-gray-50">
               {(tips as KnowledgeTip[]).map((tip) => {
                 const authorName = tip.worker?.profile?.full_name ?? '—'
-                const categoryLabel = KNOWLEDGE_CATEGORY_LABELS[tip.category] ?? tip.category
-                const categoryColor = KNOWLEDGE_CATEGORY_COLORS[tip.category] ?? 'bg-gray-100 text-gray-600'
+                const categoryLabel = tip.knowledge_category?.name ?? tip.category
+                const categoryColor = KNOWLEDGE_COLOR_CLASSES[tip.knowledge_category?.color ?? ''] ?? 'bg-gray-100 text-gray-600'
                 const comments = (tip as any).knowledge_comments ?? []
 
                 return (
@@ -104,7 +111,7 @@ export default async function AdminKnowledgePage() {
                         </div>
                       </div>
                       {/* 編輯 / 刪除按鈕 */}
-                      <AdminKnowledgeActions tip={tip} />
+                      <AdminKnowledgeActions tip={tip} categories={knowledgeCategories ?? []} />
                     </div>
                     {/* 留言列表 */}
                     {comments.length > 0 && (

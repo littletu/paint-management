@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation'
 import { MessageCircle, ChevronDown, ChevronUp, MapPin, ImageIcon, Pencil, X, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { KnowledgeTip, KnowledgeComment } from '@/types'
-import { KNOWLEDGE_CATEGORY_LABELS, KNOWLEDGE_CATEGORY_COLORS } from '@/types'
+import { KNOWLEDGE_COLOR_CLASSES } from '@/types'
 
 function formatDate(s: string) {
   return new Date(s).toLocaleDateString('zh-TW', {
@@ -49,8 +49,8 @@ export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
   })
 
   const authorName = tip.worker?.profile?.full_name ?? '師傅'
-  const categoryLabel = KNOWLEDGE_CATEGORY_LABELS[tip.category] ?? tip.category
-  const categoryColor = KNOWLEDGE_CATEGORY_COLORS[tip.category] ?? 'bg-gray-100 text-gray-600'
+  const categoryLabel = tip.knowledge_category?.name ?? tip.category
+  const categoryColor = KNOWLEDGE_COLOR_CLASSES[tip.knowledge_category?.color ?? ''] ?? 'bg-gray-100 text-gray-600'
 
   function handleEditChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setEditForm(prev => ({ ...prev, [e.target.name]: e.target.value }))

@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { ArrowLeft, Users, FileText, ExternalLink, Receipt, Calendar, Lightbulb, MapPin, MessageCircle } from 'lucide-react'
 import { AssignWorkerForm } from '@/components/forms/AssignWorkerForm'
 import { formatCurrency, formatDate } from '@/lib/utils/date'
-import { KNOWLEDGE_CATEGORY_LABELS, KNOWLEDGE_CATEGORY_COLORS } from '@/types'
+import { KNOWLEDGE_COLOR_CLASSES } from '@/types'
 import { cn } from '@/lib/utils'
 import { ProjectTabs } from '@/components/project/ProjectTabs'
 import { ProjectTimeEntriesTab } from '@/components/project/ProjectTimeEntriesTab'
@@ -51,7 +51,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     supabase.from('invoices').select('id, invoice_number, total, status').eq('project_id', id).order('created_at', { ascending: false }),
     supabase.from('expenses').select('id, date, category, amount, description, receipt_url, receipt_name').eq('project_id', id).order('date', { ascending: false }),
     supabase.from('expense_categories').select('id, name, scope').eq('scope', 'project').order('sort_order'),
-    supabase.from('knowledge_tips').select('*, worker:workers(profile:profiles(full_name)), knowledge_comments(id)').eq('project_id', id).order('created_at', { ascending: false }),
+    supabase.from('knowledge_tips').select('*, worker:workers(profile:profiles(full_name)), knowledge_category:knowledge_categories(id, name, color), knowledge_comments(id)').eq('project_id', id).order('created_at', { ascending: false }),
   ])
 
   if (!project) notFound()
@@ -299,8 +299,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
               ) : (
                 <div className="divide-y divide-gray-50">
                   {knowledgeTips.map((tip: any) => {
-                    const categoryLabel = KNOWLEDGE_CATEGORY_LABELS[tip.category as keyof typeof KNOWLEDGE_CATEGORY_LABELS] ?? tip.category
-                    const categoryColor = KNOWLEDGE_CATEGORY_COLORS[tip.category as keyof typeof KNOWLEDGE_CATEGORY_COLORS] ?? 'bg-gray-100 text-gray-600'
+                    const categoryLabel = tip.knowledge_category?.name ?? tip.category
+                    const categoryColor = KNOWLEDGE_COLOR_CLASSES[tip.knowledge_category?.color ?? ''] ?? 'bg-gray-100 text-gray-600'
                     const authorName = tip.worker?.profile?.full_name ?? '—'
                     const commentCount = tip.knowledge_comments?.length ?? 0
                     return (

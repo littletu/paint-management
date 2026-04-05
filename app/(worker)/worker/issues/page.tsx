@@ -12,14 +12,15 @@ export default async function WorkerKnowledgePage() {
   const workerId = await getWorkerIdByProfileId(user.id)
   const supabase = await createClient()
 
-  // 並行取得：所有師傅的知識條目（含留言）、所有進行中工程
-  const [{ data: tips }, { data: projects }] = await Promise.all([
+  // 並行取得：所有師傅的知識條目（含留言）、所有進行中工程、分類
+  const [{ data: tips }, { data: projects }, { data: knowledgeCategories }] = await Promise.all([
     supabase
       .from('knowledge_tips')
       .select(`
         *,
         worker:workers(profile:profiles(full_name)),
         project:projects(name),
+        knowledge_category:knowledge_categories(id, name, color),
         knowledge_comments(
           id, tip_id, worker_id, content, created_at,
           worker:workers(profile:profiles(full_name))
@@ -31,6 +32,10 @@ export default async function WorkerKnowledgePage() {
       .select('id, name')
       .eq('status', 'active')
       .order('name'),
+    supabase
+      .from('knowledge_categories')
+      .select('id, name, color, sort_order')
+      .order('sort_order'),
   ])
 
   return (
@@ -52,6 +57,7 @@ export default async function WorkerKnowledgePage() {
           <KnowledgeTipForm
             workerId={workerId}
             projects={projects ?? []}
+            categories={knowledgeCategories ?? []}
           />
         </div>
       )}

@@ -10,16 +10,13 @@ import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { Lightbulb, ChevronDown, ChevronUp, ImagePlus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { KnowledgeCategory } from '@/types'
-import { KNOWLEDGE_CATEGORY_LABELS } from '@/types'
+import type { KnowledgeDBCategory } from '@/types'
 import { compressImage } from '@/lib/utils/compress-image'
 
 interface Project { id: string; name: string }
-interface Props { workerId: string; projects: Project[] }
+interface Props { workerId: string; projects: Project[]; categories: KnowledgeDBCategory[] }
 
-const CATEGORIES = Object.entries(KNOWLEDGE_CATEGORY_LABELS) as [KnowledgeCategory, string][]
-
-export function KnowledgeTipForm({ workerId, projects }: Props) {
+export function KnowledgeTipForm({ workerId, projects, categories }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
@@ -31,7 +28,7 @@ export function KnowledgeTipForm({ workerId, projects }: Props) {
     title: '',
     content: '',
     reason: '',
-    category: 'general' as KnowledgeCategory,
+    category_id: categories[0]?.id ?? '',
     project_id: '',
   })
 
@@ -87,14 +84,15 @@ export function KnowledgeTipForm({ workerId, projects }: Props) {
       title: form.title.trim(),
       content: form.content.trim(),
       reason: form.reason.trim() || null,
-      category: form.category,
+      category: form.category_id,   // keep column for backward compat
+      category_id: form.category_id || null,
       image_url,
     })
 
     if (error) { toast.error('送出失敗：' + error.message); setLoading(false); return }
 
     toast.success('老塞分享成功！感謝師傅的智慧傳承 🎉')
-    setForm({ title: '', content: '', reason: '', category: 'general', project_id: '' })
+    setForm({ title: '', content: '', reason: '', category_id: categories[0]?.id ?? '', project_id: '' })
     removeImage()
     setOpen(false)
     setLoading(false)
@@ -165,16 +163,16 @@ export function KnowledgeTipForm({ workerId, projects }: Props) {
               <div>
                 <label className="text-xs font-medium text-gray-600 mb-1 block">分類</label>
                 <select
-                  name="category"
-                  value={form.category}
+                  name="category_id"
+                  value={form.category_id}
                   onChange={handleChange}
                   className={cn(
                     'w-full h-8 rounded-lg border border-input bg-white px-2.5 text-sm outline-none',
                     'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
                   )}
                 >
-                  {CATEGORIES.map(([value, label]) => (
-                    <option key={value} value={value}>{label}</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
                   ))}
                 </select>
               </div>

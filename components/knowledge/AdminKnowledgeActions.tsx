@@ -9,20 +9,23 @@ import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import type { KnowledgeCategory } from '@/types'
-import { KNOWLEDGE_CATEGORY_LABELS } from '@/types'
-
-const CATEGORIES = Object.entries(KNOWLEDGE_CATEGORY_LABELS) as [KnowledgeCategory, string][]
+import type { KnowledgeDBCategory } from '@/types'
 
 interface Tip {
   id: string
   title: string
   content: string
   reason: string | null
-  category: KnowledgeCategory
+  category: string
+  category_id: string | null
 }
 
-export function AdminKnowledgeActions({ tip }: { tip: Tip }) {
+interface Props {
+  tip: Tip
+  categories: KnowledgeDBCategory[]
+}
+
+export function AdminKnowledgeActions({ tip, categories }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -31,7 +34,7 @@ export function AdminKnowledgeActions({ tip }: { tip: Tip }) {
     title: tip.title,
     content: tip.content,
     reason: tip.reason ?? '',
-    category: tip.category,
+    category_id: tip.category_id ?? '',
   })
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
@@ -46,7 +49,7 @@ export function AdminKnowledgeActions({ tip }: { tip: Tip }) {
       title: form.title.trim(),
       content: form.content.trim(),
       reason: form.reason.trim() || null,
-      category: form.category,
+      category_id: form.category_id || null,
     }).eq('id', tip.id)
     setLoading(false)
     if (error) { toast.error('更新失敗：' + error.message); return }
@@ -93,16 +96,17 @@ export function AdminKnowledgeActions({ tip }: { tip: Tip }) {
         <div>
           <label className="text-xs font-medium text-gray-500 mb-1 block">分類</label>
           <select
-            name="category"
-            value={form.category}
+            name="category_id"
+            value={form.category_id}
             onChange={handleChange}
             className={cn(
               'w-full h-8 rounded-lg border border-input bg-white px-2.5 text-sm outline-none',
               'focus-visible:border-ring'
             )}
           >
-            {CATEGORIES.map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
+            <option value="">無分類</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </select>
         </div>
