@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { KnowledgeDBCategory } from '@/types'
+import { TagSelector } from '@/components/knowledge/TagSelector'
 
 interface Tip {
   id: string
@@ -19,6 +20,7 @@ interface Tip {
   category: string
   category_id: string | null
   status: string
+  tags: string[]
 }
 
 interface Props {
@@ -32,6 +34,7 @@ export function AdminKnowledgeActions({ tip, categories }: Props) {
   const [loading, setLoading] = useState(false)
   const [editing, setEditing] = useState(false)
   const [currentStatus, setCurrentStatus] = useState(tip.status)
+  const [editTags, setEditTags] = useState<string[]>(tip.tags ?? [])
   const [form, setForm] = useState({
     title: tip.title,
     content: tip.content,
@@ -52,6 +55,7 @@ export function AdminKnowledgeActions({ tip, categories }: Props) {
       content: form.content.trim(),
       reason: form.reason.trim() || null,
       category_id: form.category_id || null,
+      tags: editTags,
     }).eq('id', tip.id)
     setLoading(false)
     if (error) { toast.error('更新失敗：' + error.message); return }
@@ -122,6 +126,11 @@ export function AdminKnowledgeActions({ tip, categories }: Props) {
               <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-gray-500 mb-2 block">標籤</label>
+          <TagSelector selected={editTags} onChange={setEditTags} />
         </div>
 
         <div className="flex gap-2 pt-1">

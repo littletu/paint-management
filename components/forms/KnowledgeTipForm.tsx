@@ -12,6 +12,7 @@ import { Lightbulb, ChevronDown, ChevronUp, ImagePlus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { KnowledgeDBCategory } from '@/types'
 import { compressImage } from '@/lib/utils/compress-image'
+import { TagSelector } from '@/components/knowledge/TagSelector'
 
 interface Project { id: string; name: string }
 interface Props { workerId: string; projects: Project[]; categories: KnowledgeDBCategory[] }
@@ -24,6 +25,7 @@ export function KnowledgeTipForm({ workerId, projects, categories }: Props) {
   const [loading, setLoading] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [form, setForm] = useState({
     title: '',
     content: '',
@@ -86,6 +88,7 @@ export function KnowledgeTipForm({ workerId, projects, categories }: Props) {
       reason: form.reason.trim() || null,
       category: form.category_id,   // keep column for backward compat
       category_id: form.category_id || null,
+      tags: selectedTags,
       image_url,
     })
 
@@ -93,6 +96,7 @@ export function KnowledgeTipForm({ workerId, projects, categories }: Props) {
 
     toast.success('老塞分享成功！感謝師傅的智慧傳承 🎉')
     setForm({ title: '', content: '', reason: '', category_id: categories[0]?.id ?? '', project_id: '' })
+    setSelectedTags([])
     removeImage()
     setOpen(false)
     setLoading(false)
@@ -130,6 +134,17 @@ export function KnowledgeTipForm({ workerId, projects, categories }: Props) {
                 placeholder="例：外牆噴塗前一定要做的事"
                 className="text-sm bg-white"
               />
+            </div>
+
+            {/* 標籤 */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-2 block">
+                標籤
+                {selectedTags.length > 0 && (
+                  <span className="ml-1.5 text-orange-500">（已選 {selectedTags.length} 個）</span>
+                )}
+              </label>
+              <TagSelector selected={selectedTags} onChange={setSelectedTags} />
             </div>
 
             {/* 內容 */}

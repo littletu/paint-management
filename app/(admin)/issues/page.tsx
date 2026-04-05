@@ -52,6 +52,13 @@ function TipRow({ tip, categories }: { tip: KnowledgeTip; categories: any[] }) {
           </div>
           {/* 標題 */}
           <p className="text-sm font-semibold text-gray-900">{tip.title}</p>
+          {tip.tags?.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-1">
+              {tip.tags.map((tag: string) => (
+                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">{tag}</span>
+              ))}
+            </div>
+          )}
           {/* 內容 */}
           <p className="text-xs text-gray-500 mt-1 leading-relaxed whitespace-pre-line">{tip.content}</p>
           {tip.reason && (

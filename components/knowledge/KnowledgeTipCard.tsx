@@ -12,6 +12,7 @@ import { MessageCircle, ChevronDown, ChevronUp, MapPin, ImageIcon, Pencil, X, Ch
 import { cn } from '@/lib/utils'
 import type { KnowledgeTip, KnowledgeComment } from '@/types'
 import { KNOWLEDGE_COLOR_CLASSES } from '@/types'
+import { TagSelector } from '@/components/knowledge/TagSelector'
 
 const TIP_STATUS_BADGE: Record<string, { label: string; cls: string }> = {
   pending:  { label: '⏳ 待審核', cls: 'bg-yellow-100 text-yellow-700' },
@@ -52,6 +53,7 @@ export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
     content: tip.content,
     reason: tip.reason ?? '',
   })
+  const [editTags, setEditTags] = useState<string[]>(tip.tags ?? [])
 
   const authorName = tip.worker?.profile?.full_name ?? '師傅'
   const categoryLabel = tip.knowledge_category?.name ?? tip.category
@@ -69,6 +71,7 @@ export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
       title: editForm.title.trim(),
       content: editForm.content.trim(),
       reason: editForm.reason.trim() || null,
+      tags: editTags,
       status: 'pending',   // reset to pending for re-review after edit
     }).eq('id', tip.id)
     setSaving(false)
@@ -135,6 +138,17 @@ export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
           {/* 標題 */}
           <p className="text-sm font-semibold text-gray-900 leading-snug mb-1">{display.title}</p>
 
+          {/* 標籤 */}
+          {tip.tags?.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-1">
+              {tip.tags.map(tag => (
+                <span key={tag} className="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* 作者 + 展開指示 */}
           <div className="flex items-center justify-between">
             <span className="text-xs text-gray-500">✍️ {authorName}</span>
@@ -170,12 +184,16 @@ export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
                   <label className="text-[10px] font-semibold text-gray-500 mb-1 block">為什麼要這樣做？</label>
                   <Textarea name="reason" value={editForm.reason} onChange={handleEditChange} rows={2} className="text-sm bg-white resize-none" />
                 </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-gray-500 mb-2 block">標籤</label>
+                  <TagSelector selected={editTags} onChange={setEditTags} />
+                </div>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleSave} disabled={saving} className="flex-1 gap-1.5">
                     <Check className="w-3.5 h-3.5" />
                     {saving ? '儲存中...' : '儲存'}
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => { setEditing(false); setEditForm({ title: display.title, content: display.content, reason: display.reason }) }} disabled={saving}>
+                  <Button size="sm" variant="outline" onClick={() => { setEditing(false); setEditForm({ title: display.title, content: display.content, reason: display.reason }); setEditTags(tip.tags ?? []) }} disabled={saving}>
                     取消
                   </Button>
                 </div>
