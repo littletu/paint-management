@@ -111,7 +111,7 @@ export default async function AdminKnowledgePage() {
       .order('created_at', { ascending: false }),
     supabase
       .from('knowledge_categories')
-      .select('id, name, color, sort_order')
+      .select('id, name, color, points, sort_order')
       .order('sort_order'),
   ])
 

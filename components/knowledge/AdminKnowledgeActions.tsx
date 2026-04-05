@@ -137,6 +137,8 @@ export function AdminKnowledgeActions({ tip, categories }: Props) {
     )
   }
 
+  const tipPoints = categories.find(c => c.id === tip.category_id)?.points ?? null
+
   return (
     <div className="flex gap-1 shrink-0 flex-wrap justify-end">
       {currentStatus === 'pending' && (
@@ -144,18 +146,20 @@ export function AdminKnowledgeActions({ tip, categories }: Props) {
           <button
             onClick={() => handleSetStatus('approved')}
             disabled={loading}
-            className="p-2 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 transition-colors disabled:opacity-40"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 transition-colors disabled:opacity-40"
             title="審核通過"
           >
-            <ThumbsUp className="w-4 h-4" />
+            <ThumbsUp className="w-3.5 h-3.5" />
+            通過{tipPoints !== null ? ` +${tipPoints}分` : ''}
           </button>
           <button
             onClick={() => handleSetStatus('rejected')}
             disabled={loading}
-            className="p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-40"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 transition-colors disabled:opacity-40"
             title="駁回"
           >
-            <ThumbsDown className="w-4 h-4" />
+            <ThumbsDown className="w-3.5 h-3.5" />
+            駁回
           </button>
         </>
       )}
