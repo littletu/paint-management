@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Lightbulb, MessageCircle, MapPin, Trash2 } from 'lucide-react'
+import { Lightbulb, MessageCircle, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { KnowledgeTip } from '@/types'
 import { KNOWLEDGE_CATEGORY_LABELS, KNOWLEDGE_CATEGORY_COLORS } from '@/types'
@@ -61,38 +61,40 @@ export default async function AdminKnowledgePage() {
                 const commentCount = (tip as any).knowledge_comments?.length ?? 0
 
                 return (
-                  <div key={tip.id} className="px-5 py-4 flex items-start gap-4">
-                    <div className="flex-1 min-w-0">
-                      {/* Meta row */}
-                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                        <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', categoryColor)}>
-                          {categoryLabel}
-                        </span>
-                        {tip.project && (
-                          <span className="flex items-center gap-0.5 text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                            <MapPin className="w-2.5 h-2.5" />
-                            {tip.project.name}
+                  <div key={tip.id}>
+                    <div className="px-5 py-4 flex items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        {/* Meta row */}
+                        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                          <span className={cn('text-[10px] font-semibold px-2 py-0.5 rounded-full', categoryColor)}>
+                            {categoryLabel}
                           </span>
-                        )}
+                          {tip.project && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                              <MapPin className="w-2.5 h-2.5" />
+                              {tip.project.name}
+                            </span>
+                          )}
+                        </div>
+                        {/* 標題 */}
+                        <p className="text-sm font-semibold text-gray-900">{tip.title}</p>
+                        {/* 內容（截斷） */}
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                          {tip.content}
+                        </p>
+                        {/* 底部 */}
+                        <div className="flex items-center gap-3 mt-2">
+                          <span className="text-xs text-gray-400">✍️ {authorName}</span>
+                          <span className="text-xs text-gray-400">{formatDate(tip.created_at)}</span>
+                          <span className="flex items-center gap-0.5 text-xs text-gray-400">
+                            <MessageCircle className="w-3 h-3" />
+                            {commentCount}
+                          </span>
+                        </div>
                       </div>
-                      {/* 標題 */}
-                      <p className="text-sm font-semibold text-gray-900">{tip.title}</p>
-                      {/* 內容（截斷） */}
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
-                        {tip.content}
-                      </p>
-                      {/* 底部 */}
-                      <div className="flex items-center gap-3 mt-2">
-                        <span className="text-xs text-gray-400">✍️ {authorName}</span>
-                        <span className="text-xs text-gray-400">{formatDate(tip.created_at)}</span>
-                        <span className="flex items-center gap-0.5 text-xs text-gray-400">
-                          <MessageCircle className="w-3 h-3" />
-                          {commentCount}
-                        </span>
-                      </div>
+                      {/* 編輯 / 刪除按鈕 */}
+                      <AdminKnowledgeActions tip={tip} />
                     </div>
-                    {/* 刪除按鈕 */}
-                    <AdminKnowledgeActions tipId={tip.id} />
                   </div>
                 )
               })}
