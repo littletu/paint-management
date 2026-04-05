@@ -67,7 +67,7 @@ export function InvoiceStatusActions({ invoiceId, status }: Props) {
           標記為已付款
         </Button>
       )}
-      {(status === 'draft' || status === 'sent') && (
+      {(status === 'draft' || status === 'sent' || status === 'paid') && (
         confirmCancel ? (
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">確定取消？</span>
