@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import type { KnowledgeTip } from '@/types'
 import { KNOWLEDGE_CATEGORY_LABELS, KNOWLEDGE_CATEGORY_COLORS } from '@/types'
 import { AdminKnowledgeActions } from '@/components/knowledge/AdminKnowledgeActions'
+import { AdminCommentRow } from '@/components/knowledge/AdminCommentRow'
 
 function formatDate(s: string) {
   return new Date(s).toLocaleDateString('zh-TW', {
@@ -22,7 +23,10 @@ export default async function AdminKnowledgePage() {
       *,
       worker:workers(profile:profiles(full_name)),
       project:projects(name),
-      knowledge_comments(id)
+      knowledge_comments(
+        id, content, created_at,
+        worker:workers(profile:profiles(full_name))
+      )
     `)
     .order('created_at', { ascending: false })
 
@@ -58,7 +62,7 @@ export default async function AdminKnowledgePage() {
                 const authorName = tip.worker?.profile?.full_name ?? '—'
                 const categoryLabel = KNOWLEDGE_CATEGORY_LABELS[tip.category] ?? tip.category
                 const categoryColor = KNOWLEDGE_CATEGORY_COLORS[tip.category] ?? 'bg-gray-100 text-gray-600'
-                const commentCount = (tip as any).knowledge_comments?.length ?? 0
+                const comments = (tip as any).knowledge_comments ?? []
 
                 return (
                   <div key={tip.id}>
@@ -78,23 +82,38 @@ export default async function AdminKnowledgePage() {
                         </div>
                         {/* 標題 */}
                         <p className="text-sm font-semibold text-gray-900">{tip.title}</p>
-                        {/* 內容（截斷） */}
-                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                        {/* 內容 */}
+                        <p className="text-xs text-gray-500 mt-1 leading-relaxed whitespace-pre-line">
                           {tip.content}
                         </p>
+                        {tip.reason && (
+                          <p className="text-xs text-amber-700 mt-1.5 bg-amber-50 rounded px-2 py-1 leading-relaxed">
+                            💡 {tip.reason}
+                          </p>
+                        )}
                         {/* 底部 */}
                         <div className="flex items-center gap-3 mt-2">
                           <span className="text-xs text-gray-400">✍️ {authorName}</span>
                           <span className="text-xs text-gray-400">{formatDate(tip.created_at)}</span>
-                          <span className="flex items-center gap-0.5 text-xs text-gray-400">
-                            <MessageCircle className="w-3 h-3" />
-                            {commentCount}
-                          </span>
+                          {comments.length > 0 && (
+                            <span className="flex items-center gap-0.5 text-xs text-gray-400">
+                              <MessageCircle className="w-3 h-3" />
+                              {comments.length}
+                            </span>
+                          )}
                         </div>
                       </div>
                       {/* 編輯 / 刪除按鈕 */}
                       <AdminKnowledgeActions tip={tip} />
                     </div>
+                    {/* 留言列表 */}
+                    {comments.length > 0 && (
+                      <div className="border-t border-gray-50 bg-gray-50/50 divide-y divide-gray-100">
+                        {comments.map((c: any) => (
+                          <AdminCommentRow key={c.id} comment={c} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )
               })}
