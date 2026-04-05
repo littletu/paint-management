@@ -168,6 +168,9 @@ export interface KnowledgeTip {
   title: string
   content: string
   reason: string | null
+  caution: string | null       // 有什麼要特別注意的？
+  numeric_detail: string | null // 數字細節
+  product_brand: string | null  // 用什麼品牌的產品？
   /** Legacy slug value (technique / material / …). Use knowledge_category for display. */
   category: string
   category_id: string | null

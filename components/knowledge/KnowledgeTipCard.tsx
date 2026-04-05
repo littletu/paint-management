@@ -53,6 +53,9 @@ export function KnowledgeTipCard({ tip, currentWorkerId, tagGroups }: Props) {
     title: tip.title,
     content: tip.content,
     reason: tip.reason ?? '',
+    caution: tip.caution ?? '',
+    numeric_detail: tip.numeric_detail ?? '',
+    product_brand: tip.product_brand ?? '',
   })
   const [editTags, setEditTags] = useState<string[]>(tip.tags ?? [])
 
@@ -72,6 +75,9 @@ export function KnowledgeTipCard({ tip, currentWorkerId, tagGroups }: Props) {
       title: editForm.title.trim(),
       content: editForm.content.trim(),
       reason: editForm.reason.trim() || null,
+      caution: editForm.caution.trim() || null,
+      numeric_detail: editForm.numeric_detail.trim() || null,
+      product_brand: editForm.product_brand.trim() || null,
       tags: editTags,
       status: 'pending',   // reset to pending for re-review after edit
     }).eq('id', tip.id)
@@ -186,6 +192,18 @@ export function KnowledgeTipCard({ tip, currentWorkerId, tagGroups }: Props) {
                   <Textarea name="reason" value={editForm.reason} onChange={handleEditChange} rows={2} className="text-sm bg-white resize-none" />
                 </div>
                 <div>
+                  <label className="text-[10px] font-semibold text-gray-500 mb-1 block">有什麼要特別注意的？</label>
+                  <Textarea name="caution" value={editForm.caution} onChange={handleEditChange} rows={2} className="text-sm bg-white resize-none" placeholder="千萬不能跳過磨砂紙的步驟" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-gray-500 mb-1 block">數字細節</label>
+                  <Textarea name="numeric_detail" value={editForm.numeric_detail} onChange={handleEditChange} rows={2} className="text-sm bg-white resize-none" placeholder="至少四小時後才上第二道，水不能超過10%" />
+                </div>
+                <div>
+                  <label className="text-[10px] font-semibold text-gray-500 mb-1 block">用什麼品牌的產品？</label>
+                  <Input name="product_brand" value={editForm.product_brand} onChange={handleEditChange} className="text-sm bg-white" placeholder="銀狐2k透明面漆" />
+                </div>
+                <div>
                   <label className="text-[10px] font-semibold text-gray-500 mb-2 block">標籤</label>
                   <TagSelector groups={tagGroups} selected={editTags} onChange={setEditTags} />
                 </div>
@@ -194,7 +212,7 @@ export function KnowledgeTipCard({ tip, currentWorkerId, tagGroups }: Props) {
                     <Check className="w-3.5 h-3.5" />
                     {saving ? '儲存中...' : '儲存'}
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => { setEditing(false); setEditForm({ title: display.title, content: display.content, reason: display.reason }); setEditTags(tip.tags ?? []) }} disabled={saving}>
+                  <Button size="sm" variant="outline" onClick={() => { setEditing(false); setEditForm({ title: display.title, content: display.content, reason: display.reason, caution: tip.caution ?? '', numeric_detail: tip.numeric_detail ?? '', product_brand: tip.product_brand ?? '' }); setEditTags(tip.tags ?? []) }} disabled={saving}>
                     取消
                   </Button>
                 </div>
@@ -220,6 +238,24 @@ export function KnowledgeTipCard({ tip, currentWorkerId, tagGroups }: Props) {
                   <div className="rounded-lg bg-amber-100/60 px-3 py-2">
                     <p className="text-[10px] font-semibold text-amber-700 mb-0.5">為什麼要這樣做？</p>
                     <p className="text-xs text-amber-900 leading-relaxed whitespace-pre-line">{display.reason}</p>
+                  </div>
+                )}
+                {tip.caution && (
+                  <div className="rounded-lg bg-red-50 border border-red-100 px-3 py-2">
+                    <p className="text-[10px] font-semibold text-red-600 mb-0.5">⚠️ 特別注意</p>
+                    <p className="text-xs text-red-800 leading-relaxed whitespace-pre-line">{tip.caution}</p>
+                  </div>
+                )}
+                {tip.numeric_detail && (
+                  <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2">
+                    <p className="text-[10px] font-semibold text-blue-600 mb-0.5">📐 數字細節</p>
+                    <p className="text-xs text-blue-800 leading-relaxed whitespace-pre-line">{tip.numeric_detail}</p>
+                  </div>
+                )}
+                {tip.product_brand && (
+                  <div className="rounded-lg bg-gray-100 px-3 py-2">
+                    <p className="text-[10px] font-semibold text-gray-500 mb-0.5">🏷️ 推薦品牌產品</p>
+                    <p className="text-xs text-gray-700 leading-relaxed">{tip.product_brand}</p>
                   </div>
                 )}
                 {tip.image_url && (

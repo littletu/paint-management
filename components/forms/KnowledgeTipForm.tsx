@@ -30,6 +30,9 @@ export function KnowledgeTipForm({ workerId, projects, categories, tagGroups }: 
     title: '',
     content: '',
     reason: '',
+    caution: '',
+    numeric_detail: '',
+    product_brand: '',
     category_id: categories[0]?.id ?? '',
     project_id: '',
   })
@@ -86,6 +89,9 @@ export function KnowledgeTipForm({ workerId, projects, categories, tagGroups }: 
       title: form.title.trim(),
       content: form.content.trim(),
       reason: form.reason.trim() || null,
+      caution: form.caution.trim() || null,
+      numeric_detail: form.numeric_detail.trim() || null,
+      product_brand: form.product_brand.trim() || null,
       category: form.category_id,   // keep column for backward compat
       category_id: form.category_id || null,
       tags: selectedTags,
@@ -95,7 +101,7 @@ export function KnowledgeTipForm({ workerId, projects, categories, tagGroups }: 
     if (error) { toast.error('送出失敗：' + error.message); setLoading(false); return }
 
     toast.success('老塞分享成功！感謝師傅的智慧傳承 🎉')
-    setForm({ title: '', content: '', reason: '', category_id: categories[0]?.id ?? '', project_id: '' })
+    setForm({ title: '', content: '', reason: '', caution: '', numeric_detail: '', product_brand: '', category_id: categories[0]?.id ?? '', project_id: '' })
     setSelectedTags([])
     removeImage()
     setOpen(false)
@@ -170,6 +176,44 @@ export function KnowledgeTipForm({ workerId, projects, categories, tagGroups }: 
                 placeholder="例：因為磁磚太光滑，普通底漆咬不住"
                 rows={2}
                 className="text-sm bg-white resize-none"
+              />
+            </div>
+
+            {/* 注意事項 */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">有什麼要特別注意的？<span className="text-gray-400 font-normal ml-1">（選填）</span></label>
+              <Textarea
+                name="caution"
+                value={form.caution}
+                onChange={handleChange}
+                placeholder="例：千萬不能跳過磨砂紙的步驟"
+                rows={2}
+                className="text-sm bg-white resize-none"
+              />
+            </div>
+
+            {/* 數字細節 */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">數字細節<span className="text-gray-400 font-normal ml-1">（選填）</span></label>
+              <Textarea
+                name="numeric_detail"
+                value={form.numeric_detail}
+                onChange={handleChange}
+                placeholder="例：至少四小時後才上第二道，水不能超過10%"
+                rows={2}
+                className="text-sm bg-white resize-none"
+              />
+            </div>
+
+            {/* 品牌 */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">用什麼品牌的產品？<span className="text-gray-400 font-normal ml-1">（選填）</span></label>
+              <Input
+                name="product_brand"
+                value={form.product_brand}
+                onChange={handleChange}
+                placeholder="例：銀狐2k透明面漆"
+                className="text-sm bg-white"
               />
             </div>
 

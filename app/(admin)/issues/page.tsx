@@ -66,6 +66,21 @@ function TipRow({ tip, categories, tagGroups }: { tip: KnowledgeTip; categories:
               💡 {tip.reason}
             </p>
           )}
+          {tip.caution && (
+            <p className="text-xs text-red-700 mt-1 bg-red-50 rounded px-2 py-1 leading-relaxed">
+              ⚠️ {tip.caution}
+            </p>
+          )}
+          {tip.numeric_detail && (
+            <p className="text-xs text-blue-700 mt-1 bg-blue-50 rounded px-2 py-1 leading-relaxed">
+              📐 {tip.numeric_detail}
+            </p>
+          )}
+          {tip.product_brand && (
+            <p className="text-xs text-gray-600 mt-1 bg-gray-100 rounded px-2 py-1">
+              🏷️ {tip.product_brand}
+            </p>
+          )}
           {tip.image_url && (
             <a href={tip.image_url} target="_blank" rel="noopener noreferrer" className="inline-block mt-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}

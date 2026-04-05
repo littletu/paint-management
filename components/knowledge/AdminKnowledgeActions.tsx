@@ -17,6 +17,9 @@ interface Tip {
   title: string
   content: string
   reason: string | null
+  caution: string | null
+  numeric_detail: string | null
+  product_brand: string | null
   category: string
   category_id: string | null
   status: string
@@ -40,6 +43,9 @@ export function AdminKnowledgeActions({ tip, categories, tagGroups }: Props) {
     title: tip.title,
     content: tip.content,
     reason: tip.reason ?? '',
+    caution: tip.caution ?? '',
+    numeric_detail: tip.numeric_detail ?? '',
+    product_brand: tip.product_brand ?? '',
     category_id: tip.category_id ?? '',
   })
 
@@ -55,6 +61,9 @@ export function AdminKnowledgeActions({ tip, categories, tagGroups }: Props) {
       title: form.title.trim(),
       content: form.content.trim(),
       reason: form.reason.trim() || null,
+      caution: form.caution.trim() || null,
+      numeric_detail: form.numeric_detail.trim() || null,
+      product_brand: form.product_brand.trim() || null,
       category_id: form.category_id || null,
       tags: editTags,
     }).eq('id', tip.id)
@@ -109,6 +118,21 @@ export function AdminKnowledgeActions({ tip, categories, tagGroups }: Props) {
         <div>
           <label className="text-xs font-medium text-gray-500 mb-1 block">為什麼要這樣做？</label>
           <Textarea name="reason" value={form.reason} onChange={handleChange} rows={2} className="text-sm bg-white resize-none" />
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-gray-500 mb-1 block">有什麼要特別注意的？</label>
+          <Textarea name="caution" value={form.caution} onChange={handleChange} rows={2} className="text-sm bg-white resize-none" placeholder="千萬不能跳過磨砂紙的步驟" />
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-gray-500 mb-1 block">數字細節</label>
+          <Textarea name="numeric_detail" value={form.numeric_detail} onChange={handleChange} rows={2} className="text-sm bg-white resize-none" placeholder="至少四小時後才上第二道，水不能超過10%" />
+        </div>
+
+        <div>
+          <label className="text-xs font-medium text-gray-500 mb-1 block">用什麼品牌的產品？</label>
+          <Input name="product_brand" value={form.product_brand} onChange={handleChange} className="text-sm bg-white" placeholder="銀狐2k透明面漆" />
         </div>
 
         <div>
