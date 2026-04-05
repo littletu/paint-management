@@ -78,7 +78,7 @@ export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
                 {tip.project.name}
               </span>
             )}
-            <span className="text-[10px] text-gray-400 ml-auto">{formatDate(tip.created_at)}</span>
+            <span className="text-[10px] text-gray-400 ml-auto" suppressHydrationWarning>{formatDate(tip.created_at)}</span>
           </div>
 
           {/* 標題 */}
@@ -131,7 +131,7 @@ export function KnowledgeTipCard({ tip, currentWorkerId }: Props) {
                       <span className="text-xs font-medium text-gray-700">
                         {comment.worker?.profile?.full_name ?? '師傅'}
                       </span>
-                      <span className="text-[10px] text-gray-400">{formatDate(comment.created_at)}</span>
+                      <span className="text-[10px] text-gray-400" suppressHydrationWarning>{formatDate(comment.created_at)}</span>
                     </div>
                     <p className="text-xs text-gray-600 leading-relaxed">{comment.content}</p>
                   </div>
