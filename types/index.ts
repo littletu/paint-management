@@ -122,6 +122,7 @@ export interface KnowledgeTip {
   project_id: string | null
   title: string
   content: string
+  reason: string | null
   category: KnowledgeCategory
   image_url: string | null
   created_at: string

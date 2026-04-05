@@ -56,6 +56,7 @@ export function KnowledgeTipForm({ workerId, projects }: Props) {
   const [form, setForm] = useState({
     title: '',
     content: '',
+    reason: '',
     category: 'general' as KnowledgeCategory,
     project_id: '',
   })
@@ -110,6 +111,7 @@ export function KnowledgeTipForm({ workerId, projects }: Props) {
       project_id: form.project_id || null,
       title: form.title.trim(),
       content: form.content.trim(),
+      reason: form.reason.trim() || null,
       category: form.category,
       image_url,
     })
@@ -117,7 +119,7 @@ export function KnowledgeTipForm({ workerId, projects }: Props) {
     if (error) { toast.error('送出失敗：' + error.message); setLoading(false); return }
 
     toast.success('老塞分享成功！感謝師傅的智慧傳承 🎉')
-    setForm({ title: '', content: '', category: 'general', project_id: '' })
+    setForm({ title: '', content: '', reason: '', category: 'general', project_id: '' })
     removeImage()
     setOpen(false)
     setLoading(false)
@@ -166,6 +168,19 @@ export function KnowledgeTipForm({ workerId, projects }: Props) {
                 onChange={handleChange}
                 placeholder={"範例\n磁磚面一定要先打磨，讓表面粗糙才能附著。底漆用環氧樹脂的，不能用水性底漆，附著力差幾個月就起皮。打磨完要擦乾淨，兩道底漆比一道好，第一道薄、第二道稍厚。"}
                 rows={4}
+                className="text-sm bg-white resize-none"
+              />
+            </div>
+
+            {/* 原因 */}
+            <div>
+              <label className="text-xs font-medium text-gray-600 mb-1 block">為什麼要這樣做？</label>
+              <Textarea
+                name="reason"
+                value={form.reason}
+                onChange={handleChange}
+                placeholder="例：因為磁磚太光滑，普通底漆咬不住"
+                rows={2}
                 className="text-sm bg-white resize-none"
               />
             </div>
