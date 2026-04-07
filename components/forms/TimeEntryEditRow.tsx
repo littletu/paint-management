@@ -186,24 +186,26 @@ export function TimeEntryEditRow({ entry, projects, canEdit }: Props) {
   }
 
   return (
-    <div className="rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2.5 text-xs group relative">
+    <div className="rounded-lg border border-gray-100 bg-gray-50/50 px-3 py-2.5 text-xs">
       <div className="flex items-center justify-between mb-1.5">
         <span className="font-medium text-gray-800">{formatDate(entry.work_date)}</span>
-        <div className="flex items-center gap-1">
-          <span className="text-gray-500 truncate max-w-[100px] text-right">{entry.project?.name ?? '—'}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-gray-500 truncate max-w-[90px] text-right">{entry.project?.name ?? '—'}</span>
           {canEdit && (
-            <div className="flex items-center gap-0.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-0.5">
               <button
                 onClick={() => setEditing(true)}
-                className="p-1 rounded text-gray-400 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+                className="p-1.5 rounded-md text-orange-500 bg-orange-50 active:bg-orange-100 transition-colors"
+                aria-label="編輯"
               >
-                <Pencil className="w-3 h-3" />
+                <Pencil className="w-3.5 h-3.5" />
               </button>
               <button
                 onClick={handleDelete}
-                className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+                className="p-1.5 rounded-md text-red-400 bg-red-50 active:bg-red-100 transition-colors"
+                aria-label="刪除"
               >
-                <Trash2 className="w-3 h-3" />
+                <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
           )}
