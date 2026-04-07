@@ -437,7 +437,7 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
                       key={label}
                       type="button"
                       onClick={() => setForm(p => ({ ...p, regular_days: String(Math.max(0, (parseFloat(p.regular_days) || 0) + v)) }))}
-                      className={`flex-1 text-sm py-2 rounded-md font-medium transition-colors ${v > 0 ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      className={`flex-1 text-xl py-4 rounded-xl font-bold transition-colors ${v > 0 ? 'bg-orange-50 text-orange-600 hover:bg-orange-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                     >
                       {label}
                     </button>
@@ -463,7 +463,7 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
                       key={label}
                       type="button"
                       onClick={() => setForm(p => ({ ...p, overtime_hours: String(Math.max(0, (parseFloat(p.overtime_hours) || 0) + v)) }))}
-                      className={`flex-1 text-sm py-2 rounded-md font-medium transition-colors ${v > 0 ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                      className={`flex-1 text-xl py-4 rounded-xl font-bold transition-colors ${v > 0 ? 'bg-blue-50 text-blue-600 hover:bg-blue-100' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                     >
                       {label}
                     </button>
