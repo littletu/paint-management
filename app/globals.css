@@ -138,11 +138,54 @@
   }
 }
 
-/* Worker UI: bump all text up one size for elderly users */
-.worker-ui .text-xs   { font-size: 0.875rem;  line-height: 1.25rem; }   /* xs  → sm   */
-.worker-ui .text-sm   { font-size: 1rem;       line-height: 1.5rem;  }   /* sm  → base */
-.worker-ui .text-base { font-size: 1.125rem;   line-height: 1.75rem; }   /* base → lg  */
-.worker-ui .text-lg   { font-size: 1.25rem;    line-height: 1.75rem; }   /* lg  → xl   */
-.worker-ui .text-xl   { font-size: 1.5rem;     line-height: 2rem;    }   /* xl  → 2xl  */
-.worker-ui .text-2xl  { font-size: 1.875rem;   line-height: 2.25rem; }   /* 2xl → 3xl  */
-.worker-ui .text-3xl  { font-size: 2.25rem;    line-height: 2.5rem;  }   /* 3xl → 4xl  */
+/* =====================================================
+   Worker UI — Elderly-friendly interface
+   All text bumped up ~2 sizes; inputs/buttons taller
+   ===================================================== */
+.worker-ui .text-xs   { font-size: 1rem;       line-height: 1.5rem;  }   /* 12 → 16px */
+.worker-ui .text-sm   { font-size: 1.125rem;   line-height: 1.75rem; }   /* 14 → 18px */
+.worker-ui .text-base { font-size: 1.25rem;    line-height: 1.875rem;}   /* 16 → 20px */
+.worker-ui .text-lg   { font-size: 1.5rem;     line-height: 2rem;    }   /* 18 → 24px */
+.worker-ui .text-xl   { font-size: 1.75rem;    line-height: 2.25rem; }   /* 20 → 28px */
+.worker-ui .text-2xl  { font-size: 2.25rem;    line-height: 2.75rem; }   /* 24 → 36px */
+.worker-ui .text-3xl  { font-size: 2.75rem;    line-height: 3rem;    }   /* 30 → 44px */
+
+/* Taller inputs, selects, textareas */
+.worker-ui input[data-slot="input"],
+.worker-ui input:not([type="date"]):not([type="checkbox"]):not([type="radio"]) {
+  height: 3rem !important;
+  font-size: 1.125rem !important;
+  padding-left: 0.875rem !important;
+  padding-right: 0.875rem !important;
+}
+.worker-ui select {
+  height: 3rem !important;
+  font-size: 1.125rem !important;
+  padding-left: 0.875rem !important;
+}
+.worker-ui textarea {
+  font-size: 1.125rem !important;
+  line-height: 1.75rem !important;
+  padding: 0.75rem 0.875rem !important;
+}
+
+/* Taller buttons (shadcn Button default = h-8) */
+.worker-ui button[data-slot="button"] {
+  height: 3.25rem !important;
+  font-size: 1.125rem !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Labels */
+.worker-ui label,
+.worker-ui [data-slot="label"] {
+  font-size: 1.0625rem !important;
+  font-weight: 500;
+}
+
+/* Badges */
+.worker-ui [data-slot="badge"],
+.worker-ui .badge {
+  font-size: 0.9375rem !important;
+  padding: 0.25rem 0.625rem !important;
+}

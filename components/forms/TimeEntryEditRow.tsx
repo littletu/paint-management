@@ -31,8 +31,8 @@ interface Props {
   canEdit: boolean
 }
 
-const inputCls = 'h-8 text-sm text-right px-2'
-const labelCls = 'text-xs text-gray-500 pt-1.5'
+const inputCls = 'h-12 text-base text-right px-3'
+const labelCls = 'text-sm text-gray-500 pt-2'
 
 export function TimeEntryEditRow({ entry, projects, canEdit }: Props) {
   const supabase = createClient()
@@ -106,7 +106,7 @@ export function TimeEntryEditRow({ entry, projects, canEdit }: Props) {
             name="project_id"
             value={form.project_id}
             onChange={handleChange}
-            className="flex-1 h-8 rounded-lg border border-input bg-white px-2 text-xs outline-none max-w-[160px]"
+            className="flex-1 h-12 rounded-lg border border-input bg-white px-3 text-base outline-none max-w-[160px]"
           >
             <option value="">選擇工程</option>
             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -164,7 +164,7 @@ export function TimeEntryEditRow({ entry, projects, canEdit }: Props) {
             value={form.work_progress}
             onChange={handleChange}
             placeholder="（選填）"
-            className="w-full h-8 rounded-lg border border-input bg-white px-2.5 text-xs outline-none"
+            className="w-full h-12 rounded-lg border border-input bg-white px-3 text-base outline-none"
           />
         </div>
 
