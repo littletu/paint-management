@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { formatDate, formatCurrency } from '@/lib/utils/date'
-import { Wallet, ChevronRight, Pencil, AlertCircle } from 'lucide-react'
+import { Wallet, ChevronRight, Pencil, AlertCircle, Clock } from 'lucide-react'
 
 const statusLabel: Record<string, string> = {
   draft: '待確認', confirmed: '已確認', paid: '已發薪',
@@ -21,12 +21,21 @@ export default async function WorkerPayrollPage() {
   if (!workerId) return <div className="text-center py-12 text-gray-500">找不到師傅資料</div>
 
   const supabase = await createClient()
-  const [{ data: worker }, { data: records }] = await Promise.all([
+  const [{ data: worker }, { data: records }, { data: allEntries }] = await Promise.all([
     supabase.from('workers').select('id, daily_rate, overtime_rate').eq('id', workerId).single(),
     supabase.from('payroll_records').select('*').eq('worker_id', workerId).order('period_start', { ascending: false }),
+    supabase.from('time_entries').select('id, work_date, regular_days, overtime_hours').eq('worker_id', workerId).order('work_date', { ascending: false }),
   ])
 
   if (!worker) return <div className="text-center py-12 text-gray-500">找不到師傅資料</div>
+
+  // Find time entries not covered by any payroll period
+  const unprocessedEntries = (allEntries ?? []).filter(entry => {
+    const d = entry.work_date
+    return !(records ?? []).some(r => d >= r.period_start && d <= r.period_end)
+  })
+  const unprocessedDays = unprocessedEntries.reduce((s, e) => s + (e.regular_days ?? 0), 0)
+  const unprocessedOT = unprocessedEntries.reduce((s, e) => s + (e.overtime_hours ?? 0), 0)
 
   return (
     <div>
@@ -37,6 +46,39 @@ export default async function WorkerPayrollPage() {
           <span>加班時薪：{formatCurrency(worker.overtime_rate)}</span>
         </div>
       </div>
+
+      {/* 未計算工時 */}
+      {unprocessedEntries.length > 0 && (
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center gap-1.5 text-blue-600">
+            <Clock className="w-4 h-4" />
+            <span className="text-sm font-semibold">未計算工時（{unprocessedEntries.length}筆）</span>
+          </div>
+          <Card className="border-blue-200 shadow-sm shadow-blue-50">
+            <CardContent className="px-4 py-4 space-y-3">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="bg-blue-50 rounded-lg p-3 text-center">
+                  <p className="text-blue-600 mb-0.5">工數</p>
+                  <p className="text-xl font-bold text-blue-700">{unprocessedDays} 天</p>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-3 text-center">
+                  <p className="text-blue-600 mb-0.5">加班</p>
+                  <p className="text-xl font-bold text-blue-700">{unprocessedOT} h</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-400 text-center">尚未被計入任何薪資週期</p>
+              <Link
+                href="/worker/payroll/unprocessed"
+                className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-lg bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-xs font-semibold text-white transition-colors"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                查看 / 編輯未計算工時
+              </Link>
+            </CardContent>
+          </Card>
+          {(records?.length ?? 0) > 0 && <div className="border-t border-gray-100 pt-1" />}
+        </div>
+      )}
 
       {!records?.length ? (
         <Card>
