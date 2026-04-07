@@ -410,9 +410,7 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
                     </option>
                   )}
                   {projects.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.address ? `${p.name}（${p.address}）` : p.name}
-                    </option>
+                    <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
               )}
