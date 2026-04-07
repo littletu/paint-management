@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser, getWorkerIdByProfileId, getWorkerProfile } from '@/lib/supabase/cached-auth'
+import { getCachedKnowledgeCategories, getCachedTagGroups, getCachedActiveProjects } from '@/lib/supabase/cached-data'
 import { KnowledgeTipForm } from '@/components/forms/KnowledgeTipForm'
 import { KnowledgeTipCard } from '@/components/knowledge/KnowledgeTipCard'
 import { Lightbulb, Trophy } from 'lucide-react'
 import Link from 'next/link'
-import type { KnowledgeTip, KnowledgeTagGroup } from '@/types'
+import type { KnowledgeTip } from '@/types'
 
 export default async function WorkerKnowledgePage() {
   const user = await getAuthUser()
@@ -30,10 +31,10 @@ export default async function WorkerKnowledgePage() {
 
   const supabase = await createClient()
 
-  const [{ data: tips }, { data: projects }, { data: knowledgeCategories }, { data: rawTagGroups }] = await Promise.all([
+  // Cached semi-static data + dynamic tips query in parallel
+  const [{ data: tips }, projects, knowledgeCategories, tagGroups] = await Promise.all([
     supabase
       .from('knowledge_tips')
-      // Omit knowledge_comments — loaded lazily when card is expanded
       .select(`
         id, worker_id, project_id, title, content, reason, caution, numeric_detail, product_brand,
         category, category_id, status, tags, image_url, created_at,
@@ -45,27 +46,10 @@ export default async function WorkerKnowledgePage() {
       .or(workerId ? `status.eq.approved,worker_id.eq.${workerId}` : 'status.eq.approved')
       .order('created_at', { ascending: false })
       .limit(30),
-    supabase
-      .from('projects')
-      .select('id, name')
-      .eq('status', 'active')
-      .order('name'),
-    supabase
-      .from('knowledge_categories')
-      .select('id, name, color, points, sort_order')
-      .order('sort_order'),
-    supabase
-      .from('knowledge_tag_groups')
-      .select('id, label, sort_order, knowledge_tags(id, label, sort_order)')
-      .order('sort_order'),
+    getCachedActiveProjects(),
+    getCachedKnowledgeCategories(),
+    getCachedTagGroups(),
   ])
-
-  const tagGroups: KnowledgeTagGroup[] = (rawTagGroups ?? []).map(g => ({
-    id: g.id,
-    label: g.label,
-    sort_order: g.sort_order,
-    tags: ((g as any).knowledge_tags ?? []).sort((a: any, b: any) => a.sort_order - b.sort_order),
-  }))
 
   return (
     <div>
@@ -94,8 +78,8 @@ export default async function WorkerKnowledgePage() {
         <div className="mb-5">
           <KnowledgeTipForm
             workerId={workerId}
-            projects={projects ?? []}
-            categories={knowledgeCategories ?? []}
+            projects={projects}
+            categories={knowledgeCategories}
             tagGroups={tagGroups}
           />
         </div>

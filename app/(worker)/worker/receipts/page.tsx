@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser, getWorkerIdByProfileId } from '@/lib/supabase/cached-auth'
+import { getCachedActiveProjects } from '@/lib/supabase/cached-data'
 import { WorkerReceiptForm } from '@/components/forms/WorkerReceiptForm'
 import { todayString } from '@/lib/utils/date'
 
@@ -18,8 +19,8 @@ export default async function WorkerReceiptsPage() {
   }
 
   const supabase = await createClient()
-  const [{ data: projects }, { data: receipts }, { data: categories }] = await Promise.all([
-    supabase.from('projects').select('id, name').eq('status', 'active').order('name'),
+  const [projects, { data: receipts }, { data: categories }] = await Promise.all([
+    getCachedActiveProjects(),
     supabase.from('worker_receipts')
       .select('*, project:projects(name)')
       .eq('worker_id', workerId)
@@ -38,7 +39,7 @@ export default async function WorkerReceiptsPage() {
       <WorkerReceiptForm
         workerId={workerId}
         workerProfileId={user.id}
-        projects={projects ?? []}
+        projects={projects}
         receipts={receipts ?? []}
         categories={categories ?? []}
         today={todayString()}

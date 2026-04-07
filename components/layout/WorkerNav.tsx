@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { ClipboardList, Wallet, UserCircle, ReceiptText, Lightbulb } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +20,7 @@ interface Props {
 
 export function WorkerNav({ allowedSections }: Props) {
   const pathname = usePathname()
+  const router = useRouter()
 
   const visibleItems = navItems.filter(item =>
     item.section === null ||
@@ -26,21 +28,30 @@ export function WorkerNav({ allowedSections }: Props) {
     allowedSections.includes(item.section)
   )
 
+  // Prefetch all nav routes on mount so tapping feels instant
+  useEffect(() => {
+    visibleItems.forEach(item => router.prefetch(item.href))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-10">
-      {visibleItems.map(({ href, label, icon: Icon }) => (
-        <Link
-          key={href}
-          href={href}
-          className={cn(
-            'flex-1 flex flex-col items-center py-3 gap-1 text-xs transition-colors',
-            pathname.startsWith(href) ? 'text-orange-500' : 'text-gray-500 hover:text-orange-500'
-          )}
-        >
-          <Icon className="w-5 h-5" />
-          {label}
-        </Link>
-      ))}
+      {visibleItems.map(({ href, label, icon: Icon }) => {
+        const active = pathname.startsWith(href)
+        return (
+          <Link
+            key={href}
+            href={href}
+            prefetch={true}
+            className={cn(
+              'flex-1 flex flex-col items-center py-3 gap-1 text-xs transition-colors active:scale-90 active:opacity-70',
+              active ? 'text-orange-500' : 'text-gray-500'
+            )}
+          >
+            <Icon className={cn('w-5 h-5 transition-transform', active && 'scale-110')} />
+            <span className={cn('transition-colors', active && 'font-medium')}>{label}</span>
+          </Link>
+        )
+      })}
     </nav>
   )
 }

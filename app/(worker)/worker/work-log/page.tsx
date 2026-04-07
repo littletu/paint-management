@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getAuthUser, getWorkerIdByProfileId } from '@/lib/supabase/cached-auth'
+import { getCachedActiveProjects } from '@/lib/supabase/cached-data'
 import { WorkLogForm } from '@/components/forms/WorkLogForm'
 import { todayString } from '@/lib/utils/date'
 
@@ -21,13 +22,9 @@ export default async function WorkLogPage() {
   const today = todayString()
   const supabase = await createClient()
 
-  // Fetch projects and today's entries in parallel (was sequential before)
-  const [{ data: activeProjects }, { data: todayEntries }] = await Promise.all([
-    supabase
-      .from('projects')
-      .select('id, name, address, status')
-      .eq('status', 'active')
-      .order('name'),
+  // Active projects from cross-request cache; today's entries always fresh
+  const [activeProjects, { data: todayEntries }] = await Promise.all([
+    getCachedActiveProjects(),
     supabase
       .from('time_entries')
       .select('*, project:projects(name)')
@@ -43,7 +40,7 @@ export default async function WorkLogPage() {
       </div>
       <WorkLogForm
         workerId={workerId}
-        projects={activeProjects ?? []}
+        projects={activeProjects}
         todayEntries={todayEntries ?? []}
         today={today}
       />

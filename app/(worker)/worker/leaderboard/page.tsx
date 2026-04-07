@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { getAuthUser, getWorkerIdByProfileId, getWorkerProfile, getKnowledgeSettings } from '@/lib/supabase/cached-auth'
+import { getAuthUser, getWorkerIdByProfileId, getWorkerProfile } from '@/lib/supabase/cached-auth'
+import { getCachedKnowledgeSettings } from '@/lib/supabase/cached-data'
 import { Trophy, Lightbulb, MessageCircle, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -25,7 +26,7 @@ export default async function LeaderboardPage() {
   const [profileData, currentWorkerId, { commentPoints }] = await Promise.all([
     getWorkerProfile(user.id),
     getWorkerIdByProfileId(user.id),
-    getKnowledgeSettings(),
+    getCachedKnowledgeSettings(),
   ])
 
   const allowedSections: string[] | null = profileData?.allowed_sections ?? null

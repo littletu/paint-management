@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
-import { getAuthUser, getWorkerIdByProfileId, getKnowledgeSettings } from '@/lib/supabase/cached-auth'
+import { getAuthUser, getWorkerIdByProfileId } from '@/lib/supabase/cached-auth'
+import { getCachedKnowledgeSettings } from '@/lib/supabase/cached-data'
 import { WorkerProfileForm } from '@/components/forms/WorkerProfileForm'
 import { Star, Lightbulb, MessageCircle } from 'lucide-react'
 
@@ -34,7 +35,7 @@ export default async function WorkerProfilePage() {
           .select('id')
           .eq('worker_id', workerId)
       : Promise.resolve({ data: [] }),
-    getKnowledgeSettings(),
+    getCachedKnowledgeSettings(),
   ])
   const tipPoints = (approvedTips ?? []).reduce((sum: number, t: any) => sum + (t.knowledge_category?.points ?? 0), 0)
   const commentPoints = (comments?.length ?? 0) * commentPointsPerComment

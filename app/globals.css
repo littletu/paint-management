@@ -123,8 +123,17 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Eliminate 300ms tap delay on mobile */
+    touch-action: manipulation;
   }
   html {
     @apply font-sans;
+    /* Prevent layout shift from scrollbar appearing */
+    scrollbar-gutter: stable;
+  }
+  /* Instant tap feedback on all interactive elements */
+  a, button, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 }
