@@ -44,7 +44,7 @@ export default async function UnprocessedPayrollPage() {
           <ArrowLeft className="w-5 h-5" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-gray-900">未計算工時</h1>
+          <h1 className="text-xl font-bold text-gray-900">待計算工時</h1>
           <p className="text-xs text-gray-500 mt-0.5">尚未被計入薪資的工時紀錄</p>
         </div>
       </div>
@@ -53,7 +53,7 @@ export default async function UnprocessedPayrollPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-gray-500">
             <Clock className="w-8 h-8 mb-2 opacity-40" />
-            <p className="text-sm">目前沒有未計算的工時</p>
+            <p className="text-sm">目前沒有待計算的工時</p>
           </CardContent>
         </Card>
       ) : (

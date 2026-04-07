@@ -47,12 +47,12 @@ export default async function WorkerPayrollPage() {
         </div>
       </div>
 
-      {/* 未計算工時 */}
+      {/* 待計算工時 */}
       {unprocessedEntries.length > 0 && (
         <div className="mb-4 space-y-2">
           <div className="flex items-center gap-1.5 text-blue-600">
             <Clock className="w-4 h-4" />
-            <span className="text-sm font-semibold">未計算工時（{unprocessedEntries.length}筆）</span>
+            <span className="text-sm font-semibold">待計算工時（{unprocessedEntries.length}筆）</span>
           </div>
           <Card className="border-blue-200 shadow-sm shadow-blue-50">
             <CardContent className="px-4 py-4 space-y-3">
@@ -72,7 +72,7 @@ export default async function WorkerPayrollPage() {
                 className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-lg bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-xs font-semibold text-white transition-colors"
               >
                 <Pencil className="w-3.5 h-3.5" />
-                查看 / 編輯未計算工時
+                查看 / 編輯待計算工時
               </Link>
             </CardContent>
           </Card>
