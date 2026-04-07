@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { formatDate } from '@/lib/utils/date'
-import { CheckCircle2, Plus, ChevronLeft, ChevronRight, Calendar, Pencil, Trash2 } from 'lucide-react'
+import { CheckCircle2, Plus, ChevronLeft, ChevronRight, Calendar, Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
 import type { TimeEntry } from '@/types'
 
 interface Project {
@@ -63,6 +63,7 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
   const [loading, setLoading] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
+  const [showFees, setShowFees] = useState(false)
   const router = useRouter()
   const supabase = createClient()
 
@@ -105,6 +106,8 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
   function startEdit(entry: any) {
     setEditingId(entry.id)
     setEditingProject({ id: entry.project_id, name: entry.project?.name ?? entry.project_id, address: null })
+    const hasFees = !!(entry.transportation_fee || entry.meal_fee || entry.advance_payment || entry.subsidy || entry.other_fee)
+    setShowFees(hasFees)
     setForm({
       project_id: entry.project_id,
       regular_days: String(entry.regular_days || ''),
@@ -122,6 +125,7 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
   function cancelEdit() {
     setEditingId(null)
     setEditingProject(null)
+    setShowFees(false)
     setForm(emptyForm)
   }
 
@@ -181,6 +185,7 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
     setForm(emptyForm)
     setEditingId(null)
     setEditingProject(null)
+    setShowFees(false)
     setLoading(false)
     // Refresh server state in background (no await — don't block UI)
     router.refresh()
@@ -469,80 +474,92 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
               </div>
             </div>
 
-            {/* Fees */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label htmlFor="transportation_fee">交通費（NT$）</Label>
-                <Input
-                  id="transportation_fee"
-                  name="transportation_fee"
-                  type="number"
-                  value={form.transportation_fee}
-                  onChange={handleChange}
-                  placeholder="0"
-                  min="0"
-                  step="1"
-                  inputMode="numeric"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="meal_fee">餐費（NT$）</Label>
-                <Input
-                  id="meal_fee"
-                  name="meal_fee"
-                  type="number"
-                  value={form.meal_fee}
-                  onChange={handleChange}
-                  placeholder="0"
-                  min="0"
-                  step="1"
-                  inputMode="numeric"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="advance_payment">代墊費（NT$）</Label>
-                <Input
-                  id="advance_payment"
-                  name="advance_payment"
-                  type="number"
-                  value={form.advance_payment}
-                  onChange={handleChange}
-                  placeholder="0"
-                  min="0"
-                  step="1"
-                  inputMode="numeric"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="subsidy">補貼（NT$）</Label>
-                <Input
-                  id="subsidy"
-                  name="subsidy"
-                  type="number"
-                  value={form.subsidy}
-                  onChange={handleChange}
-                  placeholder="0"
-                  min="0"
-                  step="1"
-                  inputMode="numeric"
-                />
-              </div>
-            </div>
+            {/* Fees toggle */}
+            <button
+              type="button"
+              onClick={() => setShowFees(v => !v)}
+              className="flex items-center justify-between w-full px-3 py-2 rounded-lg border border-dashed border-gray-300 text-sm text-gray-500 hover:border-orange-300 hover:text-orange-500 hover:bg-orange-50 transition-colors"
+            >
+              <span className="font-medium">輸入費用</span>
+              {showFees ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="other_fee">其他費用（NT$）</Label>
-              <Input
-                id="other_fee"
-                name="other_fee"
-                type="number"
-                value={form.other_fee}
-                onChange={handleChange}
-                placeholder="0"
-                min="0"
-                step="1"
-                inputMode="numeric"
-              />
-            </div>
+            {showFees && (
+              <div className="space-y-3 rounded-lg border border-gray-100 bg-gray-50/50 p-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="transportation_fee">交通費（NT$）</Label>
+                    <Input
+                      id="transportation_fee"
+                      name="transportation_fee"
+                      type="number"
+                      value={form.transportation_fee}
+                      onChange={handleChange}
+                      placeholder="0"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="meal_fee">餐費（NT$）</Label>
+                    <Input
+                      id="meal_fee"
+                      name="meal_fee"
+                      type="number"
+                      value={form.meal_fee}
+                      onChange={handleChange}
+                      placeholder="0"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="advance_payment">代墊費（NT$）</Label>
+                    <Input
+                      id="advance_payment"
+                      name="advance_payment"
+                      type="number"
+                      value={form.advance_payment}
+                      onChange={handleChange}
+                      placeholder="0"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="subsidy">補貼（NT$）</Label>
+                    <Input
+                      id="subsidy"
+                      name="subsidy"
+                      type="number"
+                      value={form.subsidy}
+                      onChange={handleChange}
+                      placeholder="0"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="other_fee">其他費用（NT$）</Label>
+                  <Input
+                    id="other_fee"
+                    name="other_fee"
+                    type="number"
+                    value={form.other_fee}
+                    onChange={handleChange}
+                    placeholder="0"
+                    min="0"
+                    step="1"
+                    inputMode="numeric"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Work progress */}
             <div className="space-y-1.5">
