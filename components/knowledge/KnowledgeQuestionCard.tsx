@@ -140,7 +140,7 @@ export function KnowledgeQuestionCard({ question, currentWorkerId }: Props) {
         <div className="flex items-center gap-2 text-xs text-gray-400 mb-2 flex-wrap">
           <span>{question.worker?.profile?.full_name ?? '師傅'}</span>
           <span>·</span>
-          <span>{formatDate(question.created_at)}</span>
+          <span suppressHydrationWarning>{formatDate(question.created_at)}</span>
           {question.project && (
             <>
               <span>·</span>
@@ -188,7 +188,7 @@ export function KnowledgeQuestionCard({ question, currentWorkerId }: Props) {
               <div key={reply.id} className={`rounded-lg px-3 py-2.5 text-xs ${reply.worker_id === currentWorkerId ? 'bg-blue-50' : 'bg-gray-50'}`}>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-medium text-gray-700">{reply.worker?.profile?.full_name ?? '師傅'}</span>
-                  <span className="text-gray-400">{formatDate(reply.created_at)}</span>
+                  <span className="text-gray-400" suppressHydrationWarning>{formatDate(reply.created_at)}</span>
                 </div>
                 <p className="text-gray-700 leading-relaxed whitespace-pre-line">{reply.content}</p>
                 {reply.image_url && (
