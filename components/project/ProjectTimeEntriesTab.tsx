@@ -12,6 +12,11 @@ interface Worker {
   name: string
 }
 
+interface Project {
+  id: string
+  name: string
+}
+
 interface Props {
   projectId: string
   assignedWorkers: Worker[]
@@ -20,6 +25,7 @@ interface Props {
 interface EditForm {
   work_date: string
   worker_id: string
+  project_id: string
   regular_days: string
   overtime_hours: string
   transportation_fee: string
@@ -34,6 +40,7 @@ function entryToForm(e: any): EditForm {
   return {
     work_date: e.work_date ?? '',
     worker_id: e.worker_id ?? '',
+    project_id: e.project_id ?? '',
     regular_days: String(e.regular_days ?? 0),
     overtime_hours: String(e.overtime_hours ?? 0),
     transportation_fee: String(e.transportation_fee ?? 0),
@@ -56,6 +63,7 @@ export function ProjectTimeEntriesTab({ projectId, assignedWorkers }: Props) {
   const [workerId, setWorkerId] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [projects, setProjects] = useState<Project[]>([])
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<EditForm | null>(null)
@@ -63,11 +71,15 @@ export function ProjectTimeEntriesTab({ projectId, assignedWorkers }: Props) {
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
   const [deleting, setDeleting] = useState(false)
 
+  useEffect(() => {
+    supabase.from('projects').select('id, name').order('name').then(({ data }) => setProjects(data ?? []))
+  }, [])
+
   async function fetchEntries() {
     setLoading(true)
     let query = supabase
       .from('time_entries')
-      .select('*, worker:workers(profile:profiles(full_name))')
+      .select('*, worker:workers(profile:profiles(full_name)), project:projects(name)')
       .eq('project_id', projectId)
       .order('work_date', { ascending: false })
 
@@ -103,6 +115,7 @@ export function ProjectTimeEntriesTab({ projectId, assignedWorkers }: Props) {
     const { error } = await supabase.from('time_entries').update({
       work_date: editForm.work_date,
       worker_id: editForm.worker_id || null,
+      project_id: editForm.project_id || null,
       regular_days: parseFloat(editForm.regular_days) || 0,
       overtime_hours: parseFloat(editForm.overtime_hours) || 0,
       transportation_fee: parseFloat(editForm.transportation_fee) || 0,
@@ -227,6 +240,7 @@ export function ProjectTimeEntriesTab({ projectId, assignedWorkers }: Props) {
                   <tr>
                     <th className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">日期</th>
                     <th className="text-left px-4 py-3 font-medium text-gray-600">師傅</th>
+                    <th className="text-left px-4 py-3 font-medium text-gray-600">工程</th>
                     <th className="text-right px-4 py-3 font-medium text-gray-600">工數</th>
                     <th className="text-right px-4 py-3 font-medium text-gray-600">加班</th>
                     <th className="text-right px-4 py-3 font-medium text-gray-600">交通</th>
@@ -254,6 +268,14 @@ export function ProjectTimeEntriesTab({ projectId, assignedWorkers }: Props) {
                               <option value="">—</option>
                               {assignedWorkers.map(w => (
                                 <option key={w.id} value={w.id}>{w.name}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="px-2 py-2">
+                            <select name="project_id" value={editForm.project_id} onChange={handleEditChange} className="h-7 rounded border border-orange-300 bg-orange-50 px-1.5 text-xs outline-none focus:border-orange-500 max-w-[130px]">
+                              <option value="">— 未指定 —</option>
+                              {projects.map(p => (
+                                <option key={p.id} value={p.id}>{p.name}</option>
                               ))}
                             </select>
                           </td>
@@ -309,6 +331,7 @@ export function ProjectTimeEntriesTab({ projectId, assignedWorkers }: Props) {
                       <tr key={entry.id} className={`hover:bg-gray-50 ${isConfirmDelete ? 'bg-red-50/40' : ''}`}>
                         <td className="px-4 py-3 whitespace-nowrap">{formatDate(entry.work_date)}</td>
                         <td className="px-4 py-3">{entry.worker?.profile?.full_name ?? '—'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-500">{entry.project?.name ?? '—'}</td>
                         <td className="px-4 py-3 text-right">{entry.regular_days}天</td>
                         <td className="px-4 py-3 text-right text-orange-600">{entry.overtime_hours > 0 ? `${entry.overtime_hours}h` : '—'}</td>
                         <td className="px-4 py-3 text-right">{entry.transportation_fee > 0 ? formatCurrency(entry.transportation_fee) : '—'}</td>
