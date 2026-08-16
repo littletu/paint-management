@@ -48,6 +48,8 @@ export function TimeReportTable({ entries, projects }: Props) {
   const [editEntry, setEditEntry] = useState<TimeEntry | null>(null)
   const [form, setForm] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   function openEdit(entry: TimeEntry) {
     setEditEntry(entry)
@@ -90,11 +92,13 @@ export function TimeReportTable({ entries, projects }: Props) {
     router.refresh()
   }
 
-  async function handleDelete(entry: TimeEntry) {
-    if (!confirm(`確定要刪除 ${formatDate(entry.work_date)} ${entry.worker?.profile?.full_name ?? ''} 的工時記錄？`)) return
-    const { error } = await supabase.from('time_entries').delete().eq('id', entry.id)
+  async function handleDelete(id: string) {
+    setDeleting(true)
+    const { error } = await supabase.from('time_entries').delete().eq('id', id)
+    setDeleting(false)
     if (error) { toast.error('刪除失敗：' + error.message); return }
     toast.success('已刪除')
+    setConfirmDeleteId(null)
     router.refresh()
   }
 
@@ -157,22 +161,41 @@ export function TimeReportTable({ entries, projects }: Props) {
                   <span className="text-gray-500 text-xs line-clamp-2">{entry.work_progress || '—'}</span>
                 </td>
                 <td className="px-3 py-3">
-                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => openEdit(entry)}
-                      className="p-1.5 rounded text-orange-500 hover:bg-orange-50 transition-colors"
-                      title="編輯"
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(entry)}
-                      className="p-1.5 rounded text-red-400 hover:bg-red-50 transition-colors"
-                      title="刪除"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  {confirmDeleteId === entry.id ? (
+                    <div className="flex items-center gap-1 whitespace-nowrap">
+                      <button
+                        onClick={() => handleDelete(entry.id)}
+                        disabled={deleting}
+                        className="text-xs px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50"
+                      >
+                        {deleting ? '...' : '確認刪除'}
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        disabled={deleting}
+                        className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200"
+                      >
+                        取消
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => openEdit(entry)}
+                        className="p-1.5 rounded text-orange-500 hover:bg-orange-50 transition-colors"
+                        title="編輯"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(entry.id)}
+                        className="p-1.5 rounded text-red-400 hover:bg-red-50 transition-colors"
+                        title="刪除"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </td>
               </tr>
             ))}
