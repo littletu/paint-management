@@ -17,6 +17,7 @@ import { DonutChart } from '@/components/charts/DonutChart'
 import { ProjectTabs } from '@/components/project/ProjectTabs'
 import { ProjectTimeEntriesTab } from '@/components/project/ProjectTimeEntriesTab'
 import { AdminReceiptRow } from '@/components/forms/AdminReceiptRow'
+import { ProjectNameEditor } from '@/components/project/ProjectNameEditor'
 
 const statusLabel: Record<string, string> = {
   pending: '待開工',
@@ -117,7 +118,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <div>
             {customer && <p className="text-sm text-gray-500 mb-1">{customer}</p>}
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
+              <ProjectNameEditor projectId={id} initialName={project.name} />
               <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusClass[project.status]}`}>
                 {statusLabel[project.status]}
               </span>
