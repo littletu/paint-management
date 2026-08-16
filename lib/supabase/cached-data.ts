@@ -42,6 +42,17 @@ export const getCachedActiveProjects = cache(async () => {
   return data ?? []
 })
 
+/** 師傅薪率表（小表，一次抓齊）— 供財務計算用，避免在 time_entries 上逐列 join */
+export const getCachedWorkerRates = cache(async () => {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('workers')
+    .select('id, daily_rate, overtime_rate')
+  return new Map<string, { daily_rate: number; overtime_rate: number }>(
+    (data ?? []).map((w: any) => [w.id, { daily_rate: w.daily_rate ?? 0, overtime_rate: w.overtime_rate ?? 0 }])
+  )
+})
+
 export const getCachedKnowledgeSettings = cache(async () => {
   const supabase = await createClient()
   const { data } = await supabase

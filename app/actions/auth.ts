@@ -54,9 +54,9 @@ export async function loginAction(_prevState: { error: string }, formData: FormD
     .eq('id', data.user.id)
     .single()
 
-  if (profile?.role === 'worker') {
-    redirect('/worker/work-log')
-  } else {
+  if (profile?.role === 'admin') {
     redirect('/dashboard')
+  } else {
+    redirect('/worker/work-log')
   }
 }

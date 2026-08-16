@@ -21,7 +21,10 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: '妙根塗裝',
-    statusBarStyle: 'default',
+    statusBarStyle: 'black-translucent',
+  },
+  icons: {
+    apple: '/icon-192',
   },
 }
 

@@ -1,37 +1,35 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
-import { useEffect } from 'react'
-import { ClipboardList, Wallet, UserCircle, ReceiptText, Lightbulb } from 'lucide-react'
+import { usePathname } from 'next/navigation'
+import { ClipboardList, Wallet, UserCircle, ReceiptText, Lightbulb, Briefcase } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
-  { href: '/worker/work-log', label: '填工時',   icon: ClipboardList, section: null },
-  { href: '/worker/payroll',  label: '薪資',     icon: Wallet,        section: null },
-  { href: '/worker/receipts', label: '發票',     icon: ReceiptText,   section: null },
-  { href: '/worker/issues',   label: '妙根老塞', icon: Lightbulb,     section: 'worker-issues' },
-  { href: '/worker/profile',  label: '個人資料', icon: UserCircle,    section: null },
+  { href: '/worker/work-log', label: '填工時',   icon: ClipboardList, section: null,           role: null },
+  { href: '/worker/payroll',  label: '薪資',     icon: Wallet,        section: null,           role: null },
+  { href: '/worker/receipts', label: '發票',     icon: ReceiptText,   section: null,           role: null },
+  { href: '/worker/issues',   label: '妙根老塞', icon: Lightbulb,     section: 'worker-issues', role: null },
+  { href: '/worker/profile',  label: '個人資料', icon: UserCircle,    section: null,           role: null },
+  { href: '/worker/manager',  label: '管理',     icon: Briefcase,     section: null,           role: 'manager' },
 ]
 
 interface Props {
   allowedSections: string[] | null  // null = full access
+  role: string
 }
 
-export function WorkerNav({ allowedSections }: Props) {
+export function WorkerNav({ allowedSections, role }: Props) {
   const pathname = usePathname()
-  const router = useRouter()
 
-  const visibleItems = navItems.filter(item =>
-    item.section === null ||
-    allowedSections === null ||
-    allowedSections.includes(item.section)
-  )
-
-  // Prefetch all nav routes on mount so tapping feels instant
-  useEffect(() => {
-    visibleItems.forEach(item => router.prefetch(item.href))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  const visibleItems = navItems.filter(item => {
+    if (item.role && item.role !== role) return false
+    return (
+      item.section === null ||
+      allowedSections === null ||
+      allowedSections.includes(item.section)
+    )
+  })
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex z-10 safe-area-inset-bottom">

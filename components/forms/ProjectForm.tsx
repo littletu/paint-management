@@ -10,17 +10,19 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import type { Project, Customer } from '@/types'
+import type { PaymentStatus } from '@/components/system/PaymentStatusManager'
 import { Trash2 } from 'lucide-react'
 
 interface Props {
   project?: Project
   customers: Customer[]
+  paymentStatuses: PaymentStatus[]
   onSaved?: () => void
 }
 
 const selectCls = 'w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
-export function ProjectForm({ project, customers, onSaved }: Props) {
+export function ProjectForm({ project, customers, paymentStatuses, onSaved }: Props) {
   const router = useRouter()
   const supabase = createClient()
   const isEdit = !!project
@@ -30,6 +32,7 @@ export function ProjectForm({ project, customers, onSaved }: Props) {
     name: project?.name ?? '',
     address: project?.address ?? '',
     status: project?.status ?? 'pending',
+    payment_status: project?.payment_status ?? '待送單',
     start_date: project?.start_date ?? '',
     end_date: project?.end_date ?? '',
     contract_amount: project?.contract_amount?.toString() ?? '',
@@ -101,12 +104,21 @@ export function ProjectForm({ project, customers, onSaved }: Props) {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="status">狀態</Label>
+              <Label htmlFor="status">工程狀態</Label>
               <select name="status" value={form.status} onChange={handleChange} className={selectCls}>
                 <option value="pending">待開工</option>
                 <option value="active">進行中</option>
                 <option value="completed">已完工</option>
                 <option value="cancelled">已取消</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="payment_status">款項狀態</Label>
+              <select name="payment_status" value={form.payment_status} onChange={handleChange} className={selectCls}>
+                {paymentStatuses.map(ps => (
+                  <option key={ps.id} value={ps.label}>{ps.label}</option>
+                ))}
               </select>
             </div>
 

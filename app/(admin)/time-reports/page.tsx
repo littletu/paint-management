@@ -1,7 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatDate, formatCurrency } from '@/lib/utils/date'
+import { formatCurrency } from '@/lib/utils/date'
 import { TimeReportFilters } from '@/components/tables/TimeReportFilters'
+import { TimeReportTable } from '@/components/tables/TimeReportTable'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 
@@ -47,13 +48,22 @@ export default async function TimeReportsPage({
     <div>
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">工時報表</h1>
-        <Link
-          href="/time-reports/bulk-add"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-orange-600 hover:text-orange-700 border border-orange-200 hover:border-orange-300 px-3 py-2 rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          批量新增工時
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/time-reports/new"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 border border-gray-200 hover:border-gray-300 px-3 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            新增單日工時
+          </Link>
+          <Link
+            href="/time-reports/bulk-add"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-orange-600 hover:text-orange-700 border border-orange-200 hover:border-orange-300 px-3 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            批量新增工時
+          </Link>
+        </div>
       </div>
 
       <TimeReportFilters
@@ -90,49 +100,10 @@ export default async function TimeReportsPage({
           <CardTitle className="text-base">共 {entries?.length ?? 0} 筆</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">日期</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">師傅</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">工程</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">天數</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">加班</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">交通</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">餐費</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">代墊</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">補貼</th>
-                  <th className="text-right px-4 py-3 font-medium text-gray-600">其他</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600">施工概況</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {entries?.map((entry: any) => (
-                  <tr key={entry.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 whitespace-nowrap">{formatDate(entry.work_date)}</td>
-                    <td className="px-4 py-3">{entry.worker?.profile?.full_name}</td>
-                    <td className="px-4 py-3">{entry.project?.name}</td>
-                    <td className="px-4 py-3 text-right">{entry.regular_days}天</td>
-                    <td className="px-4 py-3 text-right text-orange-600">{entry.overtime_hours > 0 ? `${entry.overtime_hours}h` : '—'}</td>
-                    <td className="px-4 py-3 text-right">{entry.transportation_fee > 0 ? formatCurrency(entry.transportation_fee) : '—'}</td>
-                    <td className="px-4 py-3 text-right">{entry.meal_fee > 0 ? formatCurrency(entry.meal_fee) : '—'}</td>
-                    <td className="px-4 py-3 text-right">{entry.advance_payment > 0 ? formatCurrency(entry.advance_payment) : '—'}</td>
-                    <td className="px-4 py-3 text-right">{entry.subsidy > 0 ? formatCurrency(entry.subsidy) : '—'}</td>
-                    <td className="px-4 py-3 text-right">{entry.other_fee > 0 ? formatCurrency(entry.other_fee) : '—'}</td>
-                    <td className="px-4 py-3 max-w-[200px]">
-                      <span className="text-gray-500 text-xs line-clamp-2">{entry.work_progress || '—'}</span>
-                    </td>
-                  </tr>
-                ))}
-                {!entries?.length && (
-                  <tr>
-                    <td colSpan={11} className="px-4 py-8 text-center text-gray-400">無符合條件的工時記錄</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <TimeReportTable
+            entries={entries ?? []}
+            projects={projects ?? []}
+          />
         </CardContent>
       </Card>
     </div>

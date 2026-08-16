@@ -7,6 +7,8 @@ import { ProjectForm } from '@/components/forms/ProjectForm'
 import { formatCurrency, formatDate } from '@/lib/utils/date'
 import { Pencil } from 'lucide-react'
 import type { Project, Customer } from '@/types'
+import { KNOWLEDGE_COLOR_CLASSES } from '@/types'
+import type { PaymentStatus } from '@/components/system/PaymentStatusManager'
 
 const statusLabel: Record<string, string> = {
   pending: '待開工',
@@ -18,10 +20,15 @@ const statusLabel: Record<string, string> = {
 interface Props {
   project: Project
   customers: Customer[]
+  paymentStatuses: PaymentStatus[]
 }
 
-export function ProjectInfoPanel({ project, customers }: Props) {
+export function ProjectInfoPanel({ project, customers, paymentStatuses }: Props) {
   const [editing, setEditing] = useState(false)
+
+  const paymentStatusColorMap = Object.fromEntries(
+    paymentStatuses.map(ps => [ps.label, KNOWLEDGE_COLOR_CLASSES[ps.color] ?? 'bg-gray-100 text-gray-600'])
+  )
 
   if (editing) {
     return (
@@ -31,14 +38,18 @@ export function ProjectInfoPanel({ project, customers }: Props) {
             取消
           </Button>
         </div>
-        <ProjectForm project={project} customers={customers} onSaved={() => setEditing(false)} />
+        <ProjectForm project={project} customers={customers} paymentStatuses={paymentStatuses} onSaved={() => setEditing(false)} />
       </div>
     )
   }
 
+  const payLabel = project.payment_status ?? '—'
+  const payColorClass = paymentStatusColorMap[payLabel] ?? 'bg-gray-100 text-gray-600'
+
   const fields = [
     { label: '客戶', value: (project as any).customer?.name ?? '—' },
-    { label: '狀態', value: statusLabel[project.status] ?? project.status },
+    { label: '工程狀態', value: statusLabel[project.status] ?? project.status },
+    { label: '款項狀態', value: payLabel, badgeClass: payColorClass },
     { label: '合約金額', value: project.contract_amount ? formatCurrency(project.contract_amount) : '—' },
     { label: '開始日期', value: project.start_date ? formatDate(project.start_date) : '—' },
     { label: '結束日期', value: project.end_date ? formatDate(project.end_date) : '—' },
@@ -59,7 +70,11 @@ export function ProjectInfoPanel({ project, customers }: Props) {
           {fields.map(f => (
             <div key={f.label}>
               <p className="text-xs text-gray-400 mb-0.5">{f.label}</p>
-              <p className="text-sm font-medium text-gray-900">{f.value}</p>
+              {'badgeClass' in f && f.badgeClass ? (
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${f.badgeClass}`}>{f.value}</span>
+              ) : (
+                <p className="text-sm font-medium text-gray-900">{f.value}</p>
+              )}
             </div>
           ))}
         </div>

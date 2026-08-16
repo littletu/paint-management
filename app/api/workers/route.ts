@@ -9,10 +9,10 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: '未授權' }, { status: 401 })
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return NextResponse.json({ error: '權限不足' }, { status: 403 })
+  if (!['admin', 'manager'].includes(profile?.role ?? '')) return NextResponse.json({ error: '權限不足' }, { status: 403 })
 
   const body = await request.json()
-  const { full_name, phone, email, password, daily_rate, overtime_rate, bank_account, notes } = body
+  const { full_name, phone, email, password, daily_rate, overtime_rate, bank_account, payment_method, notes } = body
 
   if (!email || !password || !full_name) {
     return NextResponse.json({ error: '缺少必要欄位' }, { status: 400 })
@@ -44,6 +44,7 @@ export async function POST(request: Request) {
     daily_rate: daily_rate || 0,
     overtime_rate: overtime_rate || 0,
     bank_account: bank_account || null,
+    payment_method: payment_method || 'cash',
     notes: notes || null,
   }).select().single()
 

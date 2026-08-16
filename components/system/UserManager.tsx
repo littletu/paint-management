@@ -91,8 +91,8 @@ function UserRow({ profile, currentUserId }: { profile: Profile; currentUserId: 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm text-gray-900">{profile.full_name ?? '（未命名）'}</span>
-            <Badge variant={role === 'admin' ? 'default' : 'secondary'} className="text-xs">
-              {role === 'admin' ? '管理員' : '師傅'}
+            <Badge variant={role === 'admin' ? 'default' : role === 'manager' ? 'outline' : 'secondary'} className="text-xs">
+              {role === 'admin' ? '管理員' : role === 'manager' ? '經理' : '師傅'}
             </Badge>
             {isSelf && <span className="text-xs text-gray-400">（你自己）</span>}
           </div>
@@ -112,10 +112,10 @@ function UserRow({ profile, currentUserId }: { profile: Profile; currentUserId: 
           <div className="flex items-center gap-3 p-2.5 bg-white rounded-lg border border-gray-200">
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-800">角色</p>
-              <p className="text-xs text-gray-400">管理員可登入後台，師傅只能使用行動端</p>
+              <p className="text-xs text-gray-400">管理員：後台　經理：行動端+新增功能　師傅：行動端</p>
             </div>
             <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
-              {(['admin', 'worker'] as const).map(r => (
+              {(['admin', 'manager', 'worker'] as const).map(r => (
                 <button
                   key={r}
                   type="button"
@@ -124,7 +124,7 @@ function UserRow({ profile, currentUserId }: { profile: Profile; currentUserId: 
                     role === r ? 'bg-orange-500 text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
                   }`}
                 >
-                  {r === 'admin' ? '管理員' : '師傅'}
+                  {r === 'admin' ? '管理員' : r === 'manager' ? '經理' : '師傅'}
                 </button>
               ))}
             </div>

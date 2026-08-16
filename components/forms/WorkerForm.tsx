@@ -30,6 +30,7 @@ export function WorkerForm({ worker }: Props) {
     daily_rate: worker?.daily_rate?.toString() ?? '',
     overtime_rate: worker?.overtime_rate?.toString() ?? '',
     bank_account: worker?.bank_account ?? '',
+    payment_method: worker?.payment_method ?? 'cash',
     notes: worker?.notes ?? '',
     is_active: worker?.is_active ?? true,
   })
@@ -53,6 +54,7 @@ export function WorkerForm({ worker }: Props) {
           daily_rate: parseFloat(form.daily_rate) || 0,
           overtime_rate: parseFloat(form.overtime_rate) || 0,
           bank_account: form.bank_account || null,
+          payment_method: form.payment_method,
           notes: form.notes || null,
           is_active: form.is_active,
         }).eq('id', worker.id),
@@ -82,6 +84,7 @@ export function WorkerForm({ worker }: Props) {
           daily_rate: parseFloat(form.daily_rate) || 0,
           overtime_rate: parseFloat(form.overtime_rate) || 0,
           bank_account: form.bank_account,
+          payment_method: form.payment_method,
           notes: form.notes,
         }),
       })
@@ -134,6 +137,17 @@ export function WorkerForm({ worker }: Props) {
             <div className="space-y-1.5">
               <Label htmlFor="bank_account">銀行帳號</Label>
               <Input id="bank_account" name="bank_account" value={form.bank_account} onChange={handleChange} placeholder="銀行帳號（薪轉用）" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>領薪方式</Label>
+              <select
+                value={form.payment_method}
+                onChange={e => setForm(p => ({ ...p, payment_method: e.target.value as 'cash' | 'transfer' }))}
+                className="w-full h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <option value="cash">現金</option>
+                <option value="transfer">匯款</option>
+              </select>
             </div>
 
             {isEdit && (

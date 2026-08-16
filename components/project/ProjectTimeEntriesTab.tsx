@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatDate, formatCurrency } from '@/lib/utils/date'
-import { Clock } from 'lucide-react'
+import { Clock, Printer } from 'lucide-react'
 
 interface Worker {
   id: string
@@ -111,6 +111,21 @@ export function ProjectTimeEntriesTab({ projectId, assignedWorkers }: Props) {
           <CardTitle className="text-base flex items-center gap-2">
             <Clock className="w-4 h-4" />
             工時記錄（{loading ? '...' : entries.length} 筆）
+            <button
+              onClick={() => {
+                const params = new URLSearchParams()
+                if (workerId) params.set('worker_id', workerId)
+                if (dateFrom) params.set('date_from', dateFrom)
+                if (dateTo) params.set('date_to', dateTo)
+                const qs = params.toString()
+                window.open(`/projects/${projectId}/time-entries/print${qs ? `?${qs}` : ''}`, '_blank')
+              }}
+              disabled={loading || entries.length === 0}
+              className="ml-auto flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 border border-gray-200 hover:border-gray-300 px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              列印工時記錄
+            </button>
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">

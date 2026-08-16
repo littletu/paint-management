@@ -10,6 +10,10 @@ import { AssignWorkerForm } from '@/components/forms/AssignWorkerForm'
 import { formatCurrency, formatDate } from '@/lib/utils/date'
 import { KNOWLEDGE_COLOR_CLASSES } from '@/types'
 import { cn } from '@/lib/utils'
+import { summarizeLabor, computeProjectFinance } from '@/lib/utils/finance'
+import { getCachedWorkerRates } from '@/lib/supabase/cached-data'
+import { Meter } from '@/components/charts/Meter'
+import { DonutChart } from '@/components/charts/DonutChart'
 import { ProjectTabs } from '@/components/project/ProjectTabs'
 import { ProjectTimeEntriesTab } from '@/components/project/ProjectTimeEntriesTab'
 import { AdminReceiptRow } from '@/components/forms/AdminReceiptRow'
@@ -42,6 +46,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     { data: expenses },
     { data: expenseCategories },
     { data: knowledgeTips },
+    { data: paymentStatuses },
+    { data: laborEntries },
+    laborRates,
   ] = await Promise.all([
     supabase.from('projects').select('*, customer:customers(name)').eq('id', id).single(),
     supabase.from('customers').select('*').order('name'),
@@ -52,6 +59,9 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
     supabase.from('expenses').select('id, date, category, amount, description, receipt_url, receipt_name').eq('project_id', id).order('date', { ascending: false }),
     supabase.from('expense_categories').select('id, name, scope').eq('scope', 'project').order('sort_order'),
     supabase.from('knowledge_tips').select('*, worker:workers(profile:profiles(full_name)), knowledge_category:knowledge_categories(id, name, color), knowledge_comments(id)').eq('project_id', id).order('created_at', { ascending: false }),
+    supabase.from('payment_statuses').select('id, label, color, sort_order').order('sort_order'),
+    supabase.from('time_entries').select('worker_id, regular_days, overtime_hours, transportation_fee, meal_fee, advance_payment, subsidy, other_fee').eq('project_id', id),
+    getCachedWorkerRates(),
   ])
 
   if (!project) notFound()
@@ -68,7 +78,17 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const totalPaid = invoiceList.filter((inv: any) => inv.status === 'paid').reduce((s: number, inv: any) => s + (inv.total ?? 0), 0)
   const totalExpenses = (expenses ?? []).reduce((s: number, e: any) => s + (e.amount ?? 0), 0)
   const totalReceipts = (receipts ?? []).reduce((s: number, r: any) => s + (r.amount ?? 0), 0)
-  const remaining = contractAmount - totalInvoiced
+
+  // 人工成本（工時 × 師傅薪率 + 費用，與薪資計算口徑一致）
+  const labor = summarizeLabor((laborEntries ?? []) as any, laborRates)
+  const fin = computeProjectFinance({
+    contractAmount,
+    totalInvoiced,
+    totalPaid,
+    laborCost: labor.cost,
+    expenseCost: totalExpenses,
+    receiptCost: totalReceipts,
+  })
 
   const tabs = [
     { key: 'info', label: '工程資訊' },
@@ -121,7 +141,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-4">
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <p className="text-xs text-gray-500 mb-1.5">合約金額</p>
           <p className="text-lg font-bold text-gray-900">{contractAmount > 0 ? formatCurrency(contractAmount) : '—'}</p>
@@ -141,12 +161,66 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-500 mb-1.5">工程開銷</p>
-          <p className="text-lg font-bold text-gray-700">{totalExpenses > 0 ? formatCurrency(totalExpenses) : '—'}</p>
+          <p className="text-xs text-gray-500 mb-1.5">總成本</p>
+          <p className="text-lg font-bold text-gray-800">{fin.totalCost > 0 ? formatCurrency(fin.totalCost) : '—'}</p>
+          {fin.revenueBase > 0 && fin.totalCost > 0 && (
+            <p className="text-xs text-gray-400 mt-0.5">占收入 {Math.round(fin.totalCost / fin.revenueBase * 100)}%</p>
+          )}
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs text-gray-500 mb-1.5">師傅發票</p>
-          <p className="text-lg font-bold text-gray-700">{totalReceipts > 0 ? formatCurrency(totalReceipts) : '—'}</p>
+          <p className="text-xs text-gray-500 mb-1.5">預估毛利</p>
+          {fin.revenueBase > 0 ? (
+            <>
+              <p className={`text-lg font-bold ${fin.grossProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                {formatCurrency(fin.grossProfit)}
+              </p>
+              {fin.grossMargin !== null && (
+                <p className={`text-xs mt-0.5 ${fin.grossProfit >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+                  毛利率 {Math.round(fin.grossMargin * 100)}%
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-lg font-bold text-gray-400">—</p>
+          )}
+        </div>
+      </div>
+
+      {/* 收支評估 */}
+      <div className="bg-white border border-gray-200 rounded-xl p-5 mb-8">
+        <p className="text-sm font-semibold text-gray-800 mb-4">收支評估</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-5">
+          <div className="space-y-4">
+            <Meter
+              label="請款進度（已請款 ÷ 合約金額）"
+              ratio={contractAmount > 0 ? totalInvoiced / contractAmount : 0}
+              valueText={contractAmount > 0 ? `${Math.round(totalInvoiced / contractAmount * 100)}%` : '未設定合約金額'}
+              dangerOnOverflow={false}
+            />
+            <Meter
+              label="收款進度（已收款 ÷ 已請款）"
+              ratio={totalInvoiced > 0 ? totalPaid / totalInvoiced : 0}
+              valueText={totalInvoiced > 0 ? `${Math.round(totalPaid / totalInvoiced * 100)}%` : '尚未請款'}
+              dangerOnOverflow={false}
+            />
+            <Meter
+              label="成本占收入（總成本 ÷ 收入基準）"
+              ratio={fin.revenueBase > 0 ? fin.totalCost / fin.revenueBase : 0}
+              valueText={fin.revenueBase > 0 ? `${Math.round(fin.totalCost / fin.revenueBase * 100)}%` : '—'}
+            />
+            <p className="text-xs text-gray-400 pt-1">
+              人工明細：{labor.regularDays} 工／加班 {labor.overtimeHours} 小時
+              {labor.feeCost > 0 && `／費用 ${formatCurrency(labor.feeCost)}`}
+            </p>
+          </div>
+          <DonutChart
+            centerLabel="總成本"
+            segments={[
+              { label: '人工成本', value: labor.cost, color: '#2a78d6' },
+              { label: '工程開銷', value: totalExpenses, color: '#1baf7a' },
+              { label: '師傅發票', value: totalReceipts, color: '#eda100' },
+            ]}
+          />
         </div>
       </div>
 
@@ -154,7 +228,7 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
       <ProjectTabs tabs={tabs}>
         {/* Tab 0: 工程資訊 */}
         <div>
-          <ProjectInfoPanel project={project} customers={customers ?? []} />
+          <ProjectInfoPanel project={project} customers={customers ?? []} paymentStatuses={paymentStatuses ?? []} />
         </div>
 
         {/* Tab 1: 師傅 */}

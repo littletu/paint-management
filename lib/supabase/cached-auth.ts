@@ -3,12 +3,14 @@ import { createClient } from './server'
 
 /**
  * React cache() deduplicates calls within the same server render pass.
- * Layout and page both calling getAuthUser() → only ONE network round trip.
+ * Layout and page both calling getAuthUser() → only ONE verification.
+ * getClaims() 以本地 WebCrypto 驗證 JWT（非對稱金鑰時免打 Auth server）。
  */
-export const getAuthUser = cache(async () => {
+export const getAuthUser = cache(async (): Promise<{ id: string; email: string | null } | null> => {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  return user
+  const { data, error } = await supabase.auth.getClaims()
+  if (error || !data?.claims) return null
+  return { id: data.claims.sub, email: (data.claims.email as string | undefined) ?? null }
 })
 
 export const getWorkerIdByProfileId = cache(async (profileId: string) => {

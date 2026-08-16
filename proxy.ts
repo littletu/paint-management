@@ -1,7 +1,27 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+/**
+ * 效能設計：
+ * - 無 session cookie 的請求直接導向 /login，零網路請求
+ * - 用 getClaims() 本地驗證 JWT（非對稱金鑰時不需打 Auth server；快過期會自動刷新）
+ * - 角色路由守衛交給 (admin)/(worker) 的 layout 處理（那裡有最新資料），
+ *   proxy 只在「已登入者造訪 /login」時查一次角色決定導向
+ */
 export async function proxy(request: NextRequest) {
+  const pathname = request.nextUrl.pathname
+  const publicPaths = ['/login', '/api/auth/']
+  const isPublic = publicPaths.some(p => pathname.startsWith(p))
+
+  // 沒有任何 Supabase session cookie → 不需驗證
+  const hasAuthCookie = request.cookies
+    .getAll()
+    .some(c => c.name.startsWith('sb-') && c.name.includes('-auth-token'))
+  if (!hasAuthCookie) {
+    if (isPublic) return NextResponse.next({ request })
+    return NextResponse.redirect(new URL('/login', request.url))
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -23,51 +43,26 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
-  const pathname = request.nextUrl.pathname
+  const { data, error } = await supabase.auth.getClaims()
+  const claims = error ? null : data?.claims
 
-  // Redirect unauthenticated users to login
-  const publicPaths = ['/login', '/api/auth/']
-  if (!user && !publicPaths.some(p => pathname.startsWith(p))) {
+  if (!claims && !isPublic) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect authenticated users away from login
-  if (user && pathname === '/login') {
-    // Get user role to redirect appropriately
+  // 已登入者造訪 /login → 依角色導向
+  if (claims && pathname === '/login') {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
-      .eq('id', user.id)
+      .eq('id', claims.sub)
       .single()
 
-    if (profile?.role === 'worker') {
-      return NextResponse.redirect(new URL('/worker/work-log', request.url))
-    }
-    return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  // Protect worker routes from admins and vice versa
-  const isWorkerRoute = pathname.startsWith('/worker/')
-  const isAdminRoute = pathname.startsWith('/dashboard') ||
-    pathname.startsWith('/customers') || pathname.startsWith('/projects') ||
-    pathname.startsWith('/workers') || pathname.startsWith('/time-reports') ||
-    pathname.startsWith('/payroll') || pathname.startsWith('/accounting') ||
-    pathname.startsWith('/expenses')
-
-  if (user && (isWorkerRoute || isAdminRoute)) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single()
-
-    if (isWorkerRoute && profile?.role !== 'worker') {
+    if (profile?.role === 'admin') {
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-    if (isAdminRoute && profile?.role === 'worker') {
-      return NextResponse.redirect(new URL('/worker/work-log', request.url))
-    }
+    // worker 與 manager 都使用員工介面
+    return NextResponse.redirect(new URL('/worker/work-log', request.url))
   }
 
   return supabaseResponse
@@ -75,6 +70,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icon-192|icon-512|apple-icon|icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

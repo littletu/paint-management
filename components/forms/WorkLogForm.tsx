@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { formatDate } from '@/lib/utils/date'
-import { CheckCircle2, Plus, ChevronLeft, ChevronRight, Calendar, Pencil, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { CheckCircle2, Plus, ChevronLeft, ChevronRight, Calendar, Pencil, Trash2, ChevronDown, ChevronUp, TriangleAlert } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import type { TimeEntry } from '@/types'
 
 interface Project {
@@ -64,6 +65,9 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
   const [showFees, setShowFees] = useState(false)
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [showNotListedAlert, setShowNotListedAlert] = useState(false)
+  const [notListedForm, setNotListedForm] = useState({ address: '', customer: '' })
   const router = useRouter()
   const supabase = createClient()
 
@@ -335,37 +339,54 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
                   )}
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => startEdit(entry)}
-                    className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-orange-600 hover:border-orange-300 transition-colors"
-                  >
-                    <Pencil className="w-3 h-3" />
-                    編輯
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!confirm('確定要刪除這筆工時記錄？')) return
-                      const { error, count } = await supabase.from('time_entries').delete({ count: 'exact' }).eq('id', entry.id)
-                      if (error) { toast.error('刪除失敗：' + error.message); return }
-                      if (count === 0) { toast.error('刪除失敗：沒有權限或記錄不存在'); return }
-                      toast.success('已刪除')
-                      // Optimistic update: remove from local state immediately
-                      const remaining = dateEntries.filter(e => e.id !== entry.id)
-                      setDateEntries(remaining)
-                      if (remaining.length === 0) {
-                        setWeekEntryDates(prev => {
-                          const next = new Set(prev)
-                          next.delete(selectedDate)
-                          return next
-                        })
-                      }
-                      router.refresh()
-                    }}
-                    className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-300 transition-colors"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    移除
-                  </button>
+                  {confirmDeleteId === entry.id ? (
+                    <>
+                      <button
+                        onClick={async () => {
+                          const { error } = await supabase.from('time_entries').delete().eq('id', entry.id)
+                          setConfirmDeleteId(null)
+                          if (error) { toast.error('刪除失敗：' + error.message); return }
+                          toast.success('已刪除')
+                          const remaining = dateEntries.filter(e => e.id !== entry.id)
+                          setDateEntries(remaining)
+                          if (remaining.length === 0) {
+                            setWeekEntryDates(prev => {
+                              const next = new Set(prev)
+                              next.delete(selectedDate)
+                              return next
+                            })
+                          }
+                          router.refresh()
+                        }}
+                        className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-red-500 text-white border border-red-500 transition-colors"
+                      >
+                        確認刪除
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 transition-colors"
+                      >
+                        取消
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => startEdit(entry)}
+                        className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-orange-600 hover:border-orange-300 transition-colors"
+                      >
+                        <Pencil className="w-3 h-3" />
+                        編輯
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(entry.id)}
+                        className="flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:text-red-600 hover:border-red-300 transition-colors"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                        移除
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -393,27 +414,33 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
               {projects.length === 0 ? (
                 <p className="text-sm text-gray-500 bg-gray-50 rounded p-3">目前沒有指派工程，請聯絡管理者</p>
               ) : (
-                <select
-                  value={form.project_id}
-                  onChange={e => setForm(p => ({ ...p, project_id: e.target.value }))}
-                  disabled={false}
-                  className={cn(
-                    'w-full h-12 rounded-lg border border-input bg-transparent px-3 text-base outline-none',
-                    'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
-                    'disabled:cursor-not-allowed disabled:opacity-50',
-                    !form.project_id && 'text-muted-foreground'
-                  )}
-                >
-                  <option value="">選取施工工程</option>
-                  {editingProject && !projects.find(p => p.id === editingProject.id) && (
-                    <option key={editingProject.id} value={editingProject.id}>
-                      {editingProject.name}
-                    </option>
-                  )}
-                  {projects.map(p => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
+                <div className="space-y-2">
+                  <select
+                    value={form.project_id}
+                    onChange={e => {
+                      const id = e.target.value
+                      setForm(p => ({ ...p, project_id: id }))
+                      if (projects.find(p => p.id === id)?.name === '不在列表中') {
+                        setShowNotListedAlert(true)
+                      }
+                    }}
+                    className={cn(
+                      'w-full h-12 rounded-lg border border-input bg-transparent px-3 text-base outline-none',
+                      'focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50',
+                      !form.project_id && 'text-muted-foreground'
+                    )}
+                  >
+                    <option value="">選取施工工程</option>
+                    {editingProject && !projects.find(p => p.id === editingProject.id) && (
+                      <option key={editingProject.id} value={editingProject.id}>
+                        {editingProject.name}
+                      </option>
+                    )}
+                    {projects.map(p => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
+                </div>
               )}
             </div>
 
@@ -586,6 +613,64 @@ export function WorkLogForm({ workerId, projects, todayEntries, today }: Props) 
           </form>
         </CardContent>
       </Card>
+      <Dialog open={showNotListedAlert} onOpenChange={(open) => {
+        if (!open) {
+          setShowNotListedAlert(false)
+          setNotListedForm({ address: '', customer: '' })
+        }
+      }}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <TriangleAlert className="w-5 h-5 shrink-0" />
+              請填寫施工資訊
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">施工地址</label>
+              <input
+                type="text"
+                value={notListedForm.address}
+                onChange={e => setNotListedForm(p => ({ ...p, address: e.target.value }))}
+                placeholder="請輸入施工地址"
+                className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-gray-700">客戶名稱</label>
+              <input
+                type="text"
+                value={notListedForm.customer}
+                onChange={e => setNotListedForm(p => ({ ...p, customer: e.target.value }))}
+                placeholder="請輸入客戶名稱"
+                className="w-full h-10 rounded-lg border border-input bg-background px-3 text-sm outline-none focus:ring-2 focus:ring-ring"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              onClick={() => {
+                const parts = []
+                if (notListedForm.address) parts.push(`地址：${notListedForm.address}`)
+                if (notListedForm.customer) parts.push(`客戶：${notListedForm.customer}`)
+                if (parts.length > 0) {
+                  const note = parts.join('　')
+                  setForm(p => ({
+                    ...p,
+                    work_progress: p.work_progress ? `${note}\n${p.work_progress}` : note,
+                  }))
+                }
+                setShowNotListedAlert(false)
+                setNotListedForm({ address: '', customer: '' })
+              }}
+              className="flex-1 h-10 rounded-lg bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 active:bg-orange-700 transition-colors"
+            >
+              確認
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

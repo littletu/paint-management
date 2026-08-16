@@ -3,6 +3,8 @@ import { getAuthUser } from '@/lib/supabase/cached-auth'
 import { redirect } from 'next/navigation'
 import { WorkerHeader } from '@/components/layout/WorkerHeader'
 import { WorkerNav } from '@/components/layout/WorkerNav'
+import { IOSInstallPrompt } from '@/components/worker/IOSInstallPrompt'
+import { AndroidInstallPrompt } from '@/components/worker/AndroidInstallPrompt'
 
 export default async function WorkerLayout({ children }: { children: React.ReactNode }) {
   // React cache() deduplicates this call — pages calling getAuthUser() share the same result
@@ -19,15 +21,20 @@ export default async function WorkerLayout({ children }: { children: React.React
   if (profile?.role === 'admin') redirect('/dashboard')
 
   return (
-    <div className="flex flex-col min-h-full bg-gray-50 worker-ui">
+    <div className="flex flex-col min-h-dvh bg-gray-50 worker-ui">
       <WorkerHeader fullName={profile?.full_name ?? ''} />
 
-      {/* Content */}
-      <main className="flex-1 px-4 py-4 pb-28 max-w-lg mx-auto w-full">
+      {/* Content — extra bottom padding accounts for fixed nav + home indicator */}
+      <main className="flex-1 px-4 py-4 pb-32 max-w-lg mx-auto w-full">
         {children}
       </main>
 
-      <WorkerNav allowedSections={profile?.allowed_sections ?? null} />
+      <WorkerNav
+        allowedSections={profile?.allowed_sections ?? null}
+        role={profile?.role ?? 'worker'}
+      />
+      <IOSInstallPrompt />
+      <AndroidInstallPrompt />
     </div>
   )
 }

@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'worker'
+export type UserRole = 'admin' | 'worker' | 'manager'
 
 /** @deprecated Use KnowledgeDBCategory from DB instead */
 export type KnowledgeCategory =
@@ -73,6 +73,8 @@ export const KNOWLEDGE_COLOR_HEX: Record<string, string> = {
 
 export type ProjectStatus = 'pending' | 'active' | 'completed' | 'cancelled'
 
+export type PaymentStatus = '待送單' | '已送單' | '階段請款中' | '已開發票待入帳' | '入帳結案'
+
 export type PayrollStatus = 'draft' | 'confirmed' | 'paid'
 
 export type ExpenseCategory = 'material' | 'tool' | 'transportation' | 'other'
@@ -91,6 +93,7 @@ export interface Worker {
   daily_rate: number
   overtime_rate: number
   bank_account: string | null
+  payment_method: 'cash' | 'transfer'
   notes: string | null
   is_active: boolean
   profile?: Profile
@@ -113,6 +116,7 @@ export interface Project {
   name: string
   address: string | null
   status: ProjectStatus
+  payment_status: PaymentStatus
   start_date: string | null
   end_date: string | null
   contract_amount: number | null

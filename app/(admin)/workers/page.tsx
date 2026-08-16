@@ -6,34 +6,59 @@ import Link from 'next/link'
 import { Plus, UserCog, Phone } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils/date'
 import Image from 'next/image'
+import { Suspense } from 'react'
+import { WorkerSearch } from '@/components/workers/WorkerSearch'
 
-export default async function WorkersPage() {
+export default async function WorkersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>
+}) {
+  const { q } = await searchParams
   const supabase = await createClient()
-  const { data: workers } = await supabase
+  const { data: allWorkers } = await supabase
     .from('workers')
     .select('*, profile:profiles(full_name, phone, avatar_url)')
     .order('created_at', { ascending: false })
 
+  const workers = q
+    ? (allWorkers ?? []).filter(w => {
+        const name = w.profile?.full_name ?? ''
+        const phone = w.profile?.phone ?? ''
+        const keyword = q.toLowerCase()
+        return name.toLowerCase().includes(keyword) || phone.includes(keyword)
+      })
+    : (allWorkers ?? [])
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">師傅管理</h1>
-          <p className="text-sm text-gray-500 mt-1">共 {workers?.length ?? 0} 位師傅</p>
+          <p className="text-sm text-gray-500 mt-1">
+            {q ? `搜尋「${q}」共 ${workers.length} 筆` : `共 ${allWorkers?.length ?? 0} 位師傅`}
+          </p>
         </div>
-        <Link href="/workers/new">
-          <Button><Plus className="w-4 h-4 mr-2" />新增師傅</Button>
-        </Link>
+        <div className="flex items-center gap-3">
+          <Suspense>
+            <WorkerSearch defaultValue={q} />
+          </Suspense>
+          <Link href="/workers/new">
+            <Button className="shrink-0"><Plus className="w-4 h-4 mr-2" />新增師傅</Button>
+          </Link>
+        </div>
       </div>
 
-      {!workers?.length ? (
+      {!workers.length ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-16 text-gray-500">
             <UserCog className="w-10 h-10 mb-3 opacity-40" />
-            <p>尚無師傅資料</p>
-            <Link href="/workers/new" className="mt-3">
-              <Button variant="outline" size="sm">新增第一位師傅</Button>
-            </Link>
+            <p>{q ? `找不到符合「${q}」的師傅` : '尚無師傅資料'}</p>
+            {!q && (
+              <Link href="/workers/new" className="mt-3">
+                <Button variant="outline" size="sm">新增第一位師傅</Button>
+              </Link>
+            )}
           </CardContent>
         </Card>
       ) : (

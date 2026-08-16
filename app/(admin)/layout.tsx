@@ -1,13 +1,14 @@
 import { AdminSidebar } from '@/components/layout/AdminSidebar'
 import { createClient } from '@/lib/supabase/server'
+import { getAuthUser } from '@/lib/supabase/cached-auth'
 import { redirect } from 'next/navigation'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
+  // getClaims 本地驗證 JWT，免去每頁一次 Auth server 網路請求
+  const user = await getAuthUser()
   if (!user) redirect('/login')
 
+  const supabase = await createClient()
   const { data: profile } = await supabase
     .from('profiles')
     .select('role, full_name, allowed_sections')

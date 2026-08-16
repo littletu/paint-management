@@ -1,9 +1,14 @@
 import { createClient } from '@/lib/supabase/server'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency, currentYearMonth, formatDate } from '@/lib/utils/date'
-import { TrendingUp, TrendingDown, Wallet, Receipt, Clock, CheckCircle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, Receipt, Clock, CheckCircle, BarChart3, PieChart, FolderOpen } from 'lucide-react'
 import MonthSelector from './MonthSelector'
 import Link from 'next/link'
+import { summarizeLabor, type LaborEntry } from '@/lib/utils/finance'
+import { getCachedWorkerRates } from '@/lib/supabase/cached-data'
+import { TrendBarChart, type TrendPoint } from '@/components/charts/TrendBarChart'
+import { DonutChart } from '@/components/charts/DonutChart'
+import { Meter } from '@/components/charts/Meter'
 
 interface SearchParams { view?: string; year?: string; month?: string; quarter?: string }
 
@@ -42,6 +47,23 @@ export default async function AccountingPage({ searchParams }: { searchParams: P
   const monthStart = periodStart
   const monthEnd = periodEnd
 
+  // 近 6 個月趨勢範圍（與所選期間無關，固定顯示最近趨勢）
+  const trendMonths: { key: string; label: string; start: string; end: string }[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(curYear, curMonth - 1 - i, 1)
+    const y = d.getFullYear()
+    const m = d.getMonth() + 1
+    const lastDay = new Date(y, m, 0).getDate()
+    trendMonths.push({
+      key: `${y}-${pad(m)}`,
+      label: `${String(y).slice(2)}/${m}`,
+      start: `${y}-${pad(m)}-01`,
+      end: `${y}-${pad(m)}-${pad(lastDay)}`,
+    })
+  }
+  const trendStart = trendMonths[0].start
+  const trendEnd = trendMonths[trendMonths.length - 1].end
+
   const supabase = await createClient()
 
   const [
@@ -51,6 +73,16 @@ export default async function AccountingPage({ searchParams }: { searchParams: P
     { data: payrolls },
     { data: expenses },
     { data: workerReceipts },
+    { data: trendPayments },
+    { data: trendPayrolls },
+    { data: trendExpenses },
+    { data: trendReceipts },
+    { data: allProjects },
+    { data: allInvoices },
+    { data: allTimeEntries },
+    { data: allProjectExpenses },
+    { data: allProjectReceipts },
+    rates,
   ] = await Promise.all([
     // 本月開立的請款單（非取消）
     supabase.from('invoices')
@@ -90,6 +122,42 @@ export default async function AccountingPage({ searchParams }: { searchParams: P
       .select('amount')
       .gte('receipt_date', monthStart)
       .lte('receipt_date', monthEnd),
+
+    // ── 近 6 個月趨勢資料 ──
+    supabase.from('invoice_payments')
+      .select('amount, payment_date')
+      .gte('payment_date', trendStart)
+      .lte('payment_date', trendEnd),
+    supabase.from('payroll_records')
+      .select('net_amount, period_start')
+      .in('status', ['confirmed', 'paid'])
+      .gte('period_start', trendStart)
+      .lte('period_start', trendEnd),
+    supabase.from('expenses')
+      .select('amount, date')
+      .gte('date', trendStart)
+      .lte('date', trendEnd),
+    supabase.from('worker_receipts')
+      .select('amount, receipt_date')
+      .gte('receipt_date', trendStart)
+      .lte('receipt_date', trendEnd),
+
+    // ── 工程損益排行資料 ──
+    supabase.from('projects')
+      .select('id, name, status, contract_amount')
+      .neq('status', 'cancelled'),
+    supabase.from('invoices')
+      .select('project_id, total, status')
+      .neq('status', 'cancelled'),
+    supabase.from('time_entries')
+      .select('project_id, worker_id, regular_days, overtime_hours, transportation_fee, meal_fee, advance_payment, subsidy, other_fee'),
+    supabase.from('expenses')
+      .select('project_id, amount')
+      .not('project_id', 'is', null),
+    supabase.from('worker_receipts')
+      .select('project_id, amount')
+      .not('project_id', 'is', null),
+    getCachedWorkerRates(),
   ])
 
   // 計算各項數字
@@ -107,6 +175,65 @@ export default async function AccountingPage({ searchParams }: { searchParams: P
   const companyExpenses = (expenses ?? []).filter((e: any) => !e.project_id)
   const totalProjectExpenses = projectExpenses.reduce((s: number, e: any) => s + (e.amount || 0), 0)
   const totalCompanyExpenses = companyExpenses.reduce((s: number, e: any) => s + (e.amount || 0), 0)
+
+  // ── 近 6 個月收支趨勢 ──
+  const monthKey = (dateStr: string) => dateStr.slice(0, 7)
+  const trendMap = new Map<string, { income: number; expense: number }>(
+    trendMonths.map(m => [m.key, { income: 0, expense: 0 }])
+  )
+  for (const p of (trendPayments ?? []) as any[]) {
+    const t = trendMap.get(monthKey(p.payment_date)); if (t) t.income += p.amount || 0
+  }
+  for (const r of (trendPayrolls ?? []) as any[]) {
+    const t = trendMap.get(monthKey(r.period_start)); if (t) t.expense += r.net_amount || 0
+  }
+  for (const e of (trendExpenses ?? []) as any[]) {
+    const t = trendMap.get(monthKey(e.date)); if (t) t.expense += e.amount || 0
+  }
+  for (const r of (trendReceipts ?? []) as any[]) {
+    const t = trendMap.get(monthKey(r.receipt_date)); if (t) t.expense += r.amount || 0
+  }
+  const trendData: TrendPoint[] = trendMonths.map(m => ({
+    label: m.label,
+    income: trendMap.get(m.key)!.income,
+    expense: trendMap.get(m.key)!.expense,
+  }))
+
+  // ── 工程損益排行 ──
+  const entriesByProject = new Map<string, LaborEntry[]>()
+  for (const e of (allTimeEntries ?? []) as any[]) {
+    if (!e.project_id) continue
+    const list = entriesByProject.get(e.project_id) ?? []
+    list.push(e)
+    entriesByProject.set(e.project_id, list)
+  }
+  const costByProject = new Map<string, number>()
+  for (const [pid, list] of entriesByProject) {
+    costByProject.set(pid, summarizeLabor(list, rates).cost)
+  }
+  for (const e of (allProjectExpenses ?? []) as any[]) {
+    costByProject.set(e.project_id, (costByProject.get(e.project_id) ?? 0) + (e.amount || 0))
+  }
+  for (const r of (allProjectReceipts ?? []) as any[]) {
+    costByProject.set(r.project_id, (costByProject.get(r.project_id) ?? 0) + (r.amount || 0))
+  }
+  const invoicedByProject = new Map<string, number>()
+  for (const inv of (allInvoices ?? []) as any[]) {
+    if (!inv.project_id) continue
+    invoicedByProject.set(inv.project_id, (invoicedByProject.get(inv.project_id) ?? 0) + (inv.total || 0))
+  }
+  const projectRanking = ((allProjects ?? []) as any[])
+    .map(p => {
+      const cost = costByProject.get(p.id) ?? 0
+      const invoiced = invoicedByProject.get(p.id) ?? 0
+      const revenueBase = (p.contract_amount ?? 0) > 0 ? p.contract_amount : invoiced
+      const profit = revenueBase - cost
+      const margin = revenueBase > 0 ? profit / revenueBase : null
+      return { ...p, cost, invoiced, revenueBase, profit, margin }
+    })
+    .filter(p => p.cost > 0 || p.invoiced > 0)
+    .sort((a, b) => b.revenueBase - a.revenueBase)
+    .slice(0, 10)
 
   return (
     <div>
@@ -195,6 +322,82 @@ export default async function AccountingPage({ searchParams }: { searchParams: P
           </CardContent>
         </Card>
       </div>
+
+      {/* 收支趨勢 + 支出組成 */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mt-6">
+        <Card className="lg:col-span-3">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-blue-500" />
+              近 6 個月收支趨勢
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TrendBarChart data={trendData} />
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <PieChart className="w-4 h-4 text-orange-500" />
+              期間支出組成
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <DonutChart
+              centerLabel="總支出"
+              size={130}
+              segments={[
+                { label: '薪資', value: totalPayroll, color: '#2a78d6' },
+                { label: '工程開銷', value: totalProjectExpenses, color: '#1baf7a' },
+                { label: '公司開銷', value: totalCompanyExpenses, color: '#eda100' },
+                { label: '師傅發票', value: totalWorkerReceipts, color: '#008300' },
+              ]}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* 工程損益排行 */}
+      <Card className="mt-6">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <FolderOpen className="w-4 h-4 text-emerald-600" />
+            工程損益總覽
+            <span className="text-xs font-normal text-gray-400 ml-1">依收入基準排序・成本含人工＋開銷＋發票</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {!projectRanking.length ? (
+            <p className="text-sm text-gray-400 text-center py-8">尚無工程收支資料</p>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {projectRanking.map((p: any) => (
+                <Link key={p.id} href={`/projects/${p.id}`}>
+                  <div className="px-5 py-3.5 hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center justify-between gap-3 mb-2">
+                      <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
+                      {p.margin !== null ? (
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${p.profit >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                          毛利 {formatCurrency(p.profit)}（{Math.round(p.margin * 100)}%）
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-400 shrink-0">無收入基準</span>
+                      )}
+                    </div>
+                    <Meter
+                      label={`收入 ${formatCurrency(p.revenueBase)}`}
+                      ratio={p.revenueBase > 0 ? p.cost / p.revenueBase : 0}
+                      valueText={`成本 ${formatCurrency(p.cost)}`}
+                    />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 mt-6">
         {/* 本月請款單 */}
