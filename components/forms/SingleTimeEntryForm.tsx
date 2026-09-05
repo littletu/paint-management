@@ -11,19 +11,24 @@ import { Card, CardContent } from '@/components/ui/card'
 
 interface Worker { id: string; name: string }
 interface Project { id: string; name: string }
-interface Props { workers: Worker[]; projects: Project[] }
+interface Props {
+  workers: Worker[]
+  projects: Project[]
+  defaultWorkerId?: string
+  backHref?: string
+}
 
 function n(v: string) { return parseFloat(v) || 0 }
 
 const today = () => new Date().toISOString().slice(0, 10)
 
-export function SingleTimeEntryForm({ workers, projects }: Props) {
+export function SingleTimeEntryForm({ workers, projects, defaultWorkerId = '', backHref = '/time-reports' }: Props) {
   const supabase = createClient()
   const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({
     work_date: today(),
-    worker_id: '',
+    worker_id: defaultWorkerId,
     project_id: '',
     regular_days: '1',
     overtime_hours: '',
@@ -70,7 +75,7 @@ export function SingleTimeEntryForm({ workers, projects }: Props) {
       return
     }
     toast.success('已新增工時記錄')
-    router.push('/time-reports')
+    router.push(backHref)
     router.refresh()
   }
 
@@ -201,7 +206,7 @@ export function SingleTimeEntryForm({ workers, projects }: Props) {
             <Button type="submit" disabled={saving} className="flex-1">
               {saving ? '儲存中...' : '新增工時'}
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.back()} disabled={saving}>
+            <Button type="button" variant="outline" onClick={() => router.push(backHref)} disabled={saving}>
               取消
             </Button>
           </div>

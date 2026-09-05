@@ -136,6 +136,12 @@ export default async function WorkerDetailPage({ params }: { params: Promise<{ i
         <CardTitle className="text-base flex items-center gap-2">
           <Clock className="w-4 h-4" />
           近期工時記錄
+          <Link
+            href={`/time-reports/new?worker_id=${id}&back=/workers/${id}`}
+            className="ml-auto text-xs font-medium text-orange-600 hover:text-orange-700 border border-orange-200 hover:border-orange-300 px-2.5 py-1 rounded-lg transition-colors"
+          >
+            ＋ 新增工時
+          </Link>
         </CardTitle>
       </CardHeader>
       <CardContent>
