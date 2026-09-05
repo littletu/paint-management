@@ -19,16 +19,20 @@ export default async function WorkersPage({
   const { data: allWorkers } = await supabase
     .from('workers')
     .select('*, profile:profiles(full_name, phone, avatar_url)')
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending: true })
+
+  const sorted = (allWorkers ?? []).sort((a, b) =>
+    (a.profile?.full_name ?? '').localeCompare(b.profile?.full_name ?? '', 'zh-TW')
+  )
 
   const workers = q
-    ? (allWorkers ?? []).filter(w => {
+    ? sorted.filter(w => {
         const name = w.profile?.full_name ?? ''
         const phone = w.profile?.phone ?? ''
         const keyword = q.toLowerCase()
         return name.toLowerCase().includes(keyword) || phone.includes(keyword)
       })
-    : (allWorkers ?? [])
+    : sorted
 
   return (
     <div>
