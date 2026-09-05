@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface Worker { id: string; name: string; workerId: string }
 interface Project { id: string; name: string }
-interface Props { workers: Worker[]; projects: Project[] }
+interface Props { workers: Worker[]; projects: Project[]; defaultWorkerId?: string; backHref?: string }
 
 const DAY_NAMES = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -66,7 +66,7 @@ const selectCls = 'h-9 rounded-lg border border-input bg-white px-2.5 text-sm ou
 const smallSelectCls = 'h-8 rounded-lg border border-input bg-white px-2 text-xs outline-none focus:border-orange-400 w-full'
 const numCls = 'h-8 text-sm text-center px-1 w-full'
 
-export function BulkTimeEntryForm({ workers, projects }: Props) {
+export function BulkTimeEntryForm({ workers, projects, defaultWorkerId = '', backHref = '/time-reports' }: Props) {
   const supabase = createClient()
   const router = useRouter()
 
@@ -75,7 +75,7 @@ export function BulkTimeEntryForm({ workers, projects }: Props) {
   const curMonth = now.getMonth() + 1
   const curHalf: 1 | 2 = now.getDate() <= 15 ? 1 : 2
 
-  const [workerId, setWorkerId] = useState('')
+  const [workerId, setWorkerId] = useState(defaultWorkerId)
   const [defaultProjectId, setDefaultProjectId] = useState('')
   const [year, setYear] = useState(curYear)
   const [month, setMonth] = useState(curMonth)
@@ -155,7 +155,7 @@ export function BulkTimeEntryForm({ workers, projects }: Props) {
     if (error) { toast.error('新增失敗：' + error.message); setSaving(false); return }
     toast.success(`成功新增 ${activeDays.length} 筆工時記錄`)
     setSaving(false)
-    router.push('/time-reports')
+    router.push(backHref)
   }
 
   return (

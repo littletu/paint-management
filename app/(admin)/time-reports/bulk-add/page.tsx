@@ -3,7 +3,12 @@ import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { BulkTimeEntryForm } from '@/components/forms/BulkTimeEntryForm'
 
-export default async function BulkAddTimeEntryPage() {
+export default async function BulkAddTimeEntryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ worker_id?: string; back?: string }>
+}) {
+  const sp = await searchParams
   const supabase = await createClient()
 
   const [{ data: workers }, { data: projects }] = await Promise.all([
@@ -25,12 +30,14 @@ export default async function BulkAddTimeEntryPage() {
     name: w.profile?.full_name ?? '未知',
   }))
 
+  const backHref = sp.back ?? '/time-reports'
+
   return (
     <div>
       <div className="mb-6">
-        <Link href="/time-reports" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4">
+        <Link href={backHref} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-4">
           <ArrowLeft className="w-4 h-4" />
-          返回工時報表
+          返回
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">批量新增工時</h1>
         <p className="text-sm text-gray-500 mt-1">為特定師傅一次新增兩週（14天）的工時記錄</p>
@@ -39,6 +46,8 @@ export default async function BulkAddTimeEntryPage() {
       <BulkTimeEntryForm
         workers={workerList}
         projects={projects ?? []}
+        defaultWorkerId={sp.worker_id ?? ''}
+        backHref={backHref}
       />
     </div>
   )
