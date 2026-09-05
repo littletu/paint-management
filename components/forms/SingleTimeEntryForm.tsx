@@ -61,7 +61,14 @@ export function SingleTimeEntryForm({ workers, projects }: Props) {
     })
     setSaving(false)
 
-    if (error) { toast.error('新增失敗：' + error.message); return }
+    if (error) {
+      if (error.code === '23505') {
+        toast.error('此師傅在這天已有相同工程的工時記錄，請至工時報表編輯現有記錄')
+      } else {
+        toast.error('新增失敗：' + error.message)
+      }
+      return
+    }
     toast.success('已新增工時記錄')
     router.push('/time-reports')
     router.refresh()
