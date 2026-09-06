@@ -151,23 +151,18 @@ export function WorkerWageCard({ workerId, currentDailyRate, currentOvertimeRate
     if (!editForm.effective_date) { toast.error('請選擇生效日期'); return }
 
     setEditSaving(true)
-    const ops: Promise<any>[] = [
+    const ops = [
       supabase.from('worker_wage_history').update({
         daily_rate: newDaily,
         overtime_rate: newOvertime,
         effective_date: editForm.effective_date,
         notes: editForm.notes.trim() || null,
       }).eq('id', editingId),
+      ...(isLatest ? [supabase.from('workers').update({
+        daily_rate: newDaily,
+        overtime_rate: newOvertime,
+      }).eq('id', workerId)] : []),
     ]
-    // if editing the latest record, also sync workers table
-    if (isLatest) {
-      ops.push(
-        supabase.from('workers').update({
-          daily_rate: newDaily,
-          overtime_rate: newOvertime,
-        }).eq('id', workerId)
-      )
-    }
     const results = await Promise.all(ops)
     setEditSaving(false)
 
